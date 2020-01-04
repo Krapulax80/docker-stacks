@@ -240,6 +240,13 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
+  watchtower:
+      image: v2tec/watchtower
+      container_name: watchtower
+      restart: always
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      command: --interval 3600
 ######################################################## SYSTEM UTILITIES  ########################################################
 
 # ## Autoindex - Simple Directory Index
