@@ -58,6 +58,8 @@ services:
     container_name: postgres
     hostname: postgres
     restart: always
+    networks:   
+      - default
     volumes:
       - ${USERDIR}/docker/postgres:/var/lib/postgresql/data
     environment:
