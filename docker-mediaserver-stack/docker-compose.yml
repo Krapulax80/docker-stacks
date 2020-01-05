@@ -1,7 +1,6 @@
-
+##################################################### SHARED PART ################################################################
 version: "3.7"
 
-##################################################### NETWORKS ###################################################### 
 networks:
   traefik_proxy:
     external:
@@ -9,146 +8,48 @@ networks:
   default:
     driver: bridge
 
-######################################################SERVICES ######################################################
-
 services:
 
-## Autoindex - Simple Directory Index
-  autoindex:
-    image: dceoy/nginx-autoindex
-    container_name: autoindex
-    hostname: autoindex
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-    ports:
-      - "${AUTOINDEX_PORT}:80"
-    volumes:
-      #- /media:/var/lib/nginx/html:ro # Location you want to index #Changed by FS
-      - ${HDD01}:/HDD01
-      - ${HDD02}:/var/lib/nginx/html:ro
-    labels:
-      traefik.enable: "true"
-      traefik.backend: autoindex
-      traefik.protocol: http
-      traefik.port: 80
-      traefik.frontend.rule: "Host:index.${DOMAINNAME}"
-      traefik.frontend.headers.SSLHost: index.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-      traefik.frontend.auth.basic.users: '${HTTP_USERNAME}:${HTTP_PASSWORD}'
+# ## Autoindex - Simple Directory Index
+#   autoindex:
+#     image: dceoy/nginx-autoindex
+#     container_name: autoindex
+#     hostname: autoindex
+#     restart: unless-stopped
+#     networks:
+#       - traefik_proxy
+#     ports:
+#       - "${AUTOINDEX_PORT}:80"
+#     volumes:
+#       #- /media:/var/lib/nginx/html:ro # Location you want to index #Changed by FS
+#       - ${HDD01}:/HDD01
+#       - ${HDD02}:/var/lib/nginx/html:ro
+#     labels:
+#       traefik.enable: "true"
+#       traefik.backend: autoindex
+#       traefik.protocol: http
+#       traefik.port: 80
+#       traefik.frontend.rule: "Host:index.${DOMAINNAME}"
+#       traefik.frontend.headers.SSLHost: index.${DOMAINNAME}
+#       traefik.docker.network: traefik_proxy
+#       traefik.frontend.passHostHeader: "true"
+#       traefik.frontend.headers.SSLForceHost: "true"
+#       traefik.frontend.headers.SSLRedirect: "true"
+#       traefik.frontend.headers.browserXSSFilter: "true"
+#       traefik.frontend.headers.contentTypeNosniff: "true"
+#       traefik.frontend.headers.forceSTSHeader: "true"
+#       traefik.frontend.headers.STSSeconds: 315360000
+#       traefik.frontend.headers.STSIncludeSubdomains: "true"
+#       traefik.frontend.headers.STSPreload: "true"
+#       traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+#       traefik.frontend.headers.frameDeny: "true"
+#       traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+#       traefik.frontend.auth.forward.address: "http://oauth:4181"
+#       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+#       traefik.frontend.auth.forward.trustForwardHeader: "true"
+#       traefik.frontend.auth.basic.users: '${HTTP_USERNAME}:${HTTP_PASSWORD}'
 
-
-########################################################  DATABASES  ########################################################
-
-  # ##MariaDB
-  mariadb:
-    image: mariadb
-    # command: --default-authentication-plugin=mysql_native_password
-    container_name: mariadb
-    hostname: mariadb
-    ports:
-      - '${DB_PORT}:3306'
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    volumes:
-      - '${USERDIR}/docker/mariadb/var:/var/lib/mysql'
-      - '${USERDIR}/docker/mariadb/etc:/etc/mysql'    
-      - '${USERDIR}//docker-stacks/helper files/shared/initdb.sql:/tmp/initdb.sql'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      # - ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}   
-
-# InfluxDB - Database for sensor data
-# Create influxdb.conf
-  influxdb:
-    image: influxdb
-    container_name: influxdb
-    hostname: influxdb
-    restart: always
-    ports:
-      - "${INFLUXDB_PORT}:8086"
-    volumes:
-#      - ${USERDIR}/docker/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro
-      - ${USERDIR}/docker/influxdb/db:/var/lib/influxdb
-     #    command: -config /etc/influxdb/influxdb.conf
-
-# Postgres - Database
-  postgres:
-    image: postgres
-    container_name: postgres
-    hostname: postgres
-    restart: always
-    volumes:
-      - ${USERDIR}/docker/postgres:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: ${STATPING_DB_PASS}
-      POSTGRES_USER: ${STATPING_DB_USER}
-      POSTGRES_DB: ${STATPING_DB}
-
-# Grafana - Graphical data visualization for InfluxDB data
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    hostname: grafana
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    ports:
-      - "${GRAFANA_PORT}:3000"
-    depends_on:
-      - "influxdb"
-    user: "0"
-    volumes:
-      - ${USERDIR}/docker/grafana:/var/lib/grafana
-    environment:
-      GF_INSTALL_PLUGINS: "grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel" 
-    labels:
-      traefik.enable: "true"
-      traefik.backend: grafana
-      traefik.protocol: http
-      traefik.port: 3000
-      traefik.frontend.rule: Host:graf.${DOMAINNAME}
-      traefik.frontend.headers.SSLHost: graf.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-#      traefik.frontend.headers.frameDeny: "true" #customFrameOptionsValue overrides this
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
+########################################################  SYSTEM MONITOR ########################################################
 
 # Varken - Monitor Plex, Sonarr, Radarr, and Other Data
   varken:
@@ -216,40 +117,91 @@ services:
 
 ########################################################  DOWNLOADERS  ########################################################
 
-# qBittorrent without VPN – Bittorrent Downloader (Alternative)
-  qbittorrent:
-    image: "linuxserver/qbittorrent"
-    hostname: qbittorrent
-    container_name: "qbittorrent"
-    volumes:
-      - ${USERDIR}/docker/qbittorrent:/config
-      - ${USERDIR}/Downloads/completed:/completed
-      - ${USERDIR}/Downloads/incomplete:/incomplete
-      - ${USERDIR}/docker/shared:/shared
-      - ${USERDIR}/hdd01:/hdd01
-      - ${USERDIR}/hdd02:/hdd02
+# # qBittorrent without VPN – Bittorrent Downloader (Alternative)
+#   qbittorrent:
+#     image: "linuxserver/qbittorrent"
+#     hostname: qbittorrent
+#     container_name: "qbittorrent"
+#     volumes:
+#       - ${USERDIR}/docker/qbittorrent:/config
+#       - ${USERDIR}/Downloads/completed:/completed
+#       - ${USERDIR}/Downloads/incomplete:/incomplete
+#       - ${USERDIR}/docker/shared:/shared
+#       - ${USERDIR}/hdd01:/hdd01
+#       - ${USERDIR}/hdd02:/hdd02
+#     ports:
+#       # - "${QBITTORRENT_PORT}:8168"
+#       - "${QBITTORRENT_PORT}:${QBITTORRENT_PORT}"
+#       - "6881:6881"
+#       - "6881:6881/udp"
+#     restart: always
+#     environment:
+#       - PUID=${PUID}
+#       - PGID=${PGID}
+#       - TZ=${TZ}
+#       - UMASK_SET=002
+#       # - WEBUI_PORT=8168
+#       - WEBUI_PORT=${QBITTORRENT_PORT}
+#     labels:
+#       traefik.enable: "true"
+#       traefik.backend: qbittorrent 
+#       traefik.protocol: http
+#       # traefik.port: 8168
+#       traefik.port: ${QBITTORRENT_PORT}
+#       traefik.frontend.rule: Host:qbit.${DOMAINNAME}
+# #     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /qbittorrent
+#       traefik.frontend.headers.SSLHost: qbit.${DOMAINNAME}
+#       traefik.docker.network: traefik_proxy
+#       traefik.frontend.passHostHeader: "true"
+#       traefik.frontend.headers.SSLForceHost: "true"
+#       traefik.frontend.headers.SSLRedirect: "true"
+#       traefik.frontend.headers.browserXSSFilter: "true"
+#       traefik.frontend.headers.contentTypeNosniff: "true"
+#       traefik.frontend.headers.forceSTSHeader: "true"
+#       traefik.frontend.headers.STSSeconds: 315360000
+#       traefik.frontend.headers.STSIncludeSubdomains: "true"
+#       traefik.frontend.headers.STSPreload: "true"
+#       traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+#       traefik.frontend.headers.frameDeny: "true"
+#       traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+#       traefik.frontend.auth.forward.address: "http://oauth:4181"
+#       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+#       traefik.frontend.auth.forward.trustForwardHeader: "true"
+
+#Transmission - torrent engine
+
+  transmission:
+    image: linuxserver/transmission
+    container_name: transmission
+    hostname: transmission
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+      - default
     ports:
-      # - "${QBITTORRENT_PORT}:8168"
-      - "${QBITTORRENT_PORT}:${QBITTORRENT_PORT}"
-      - "6881:6881"
-      - "6881:6881/udp"
-    restart: always
+      - "${TRANSM_PORT}:9091"
+      - 51413:51413
+      - 51413:51413/udp
+    volumes:
+    # config
+      - ${USERDIR}/docker/transmission:/config
+    # media
+      - ${HDD01}/completed:/downloads
+      - ${HDD01}/torrents:/watch    
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - UMASK_SET=002
-      # - WEBUI_PORT=8168
-      - WEBUI_PORT=${QBITTORRENT_PORT}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      USER: ${DEF_USER}
+      PASS: ${DEF_PASSWORD}
     labels:
       traefik.enable: "true"
-      traefik.backend: qbittorrent 
+      traefik.backend: transmission
       traefik.protocol: http
-      # traefik.port: 8168
-      traefik.port: ${QBITTORRENT_PORT}
-      traefik.frontend.rule: Host:qbit.${DOMAINNAME}
-#     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /qbittorrent
-      traefik.frontend.headers.SSLHost: qbit.${DOMAINNAME}
+      traefik.port: 9091
+      traefik.frontend.rule: Host:transmission.${DOMAINNAME}
+#     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /transmission
+      traefik.frontend.headers.SSLHost: transmission.${DOMAINNAME}
       traefik.docker.network: traefik_proxy
       traefik.frontend.passHostHeader: "true"
       traefik.frontend.headers.SSLForceHost: "true"
@@ -262,14 +214,12 @@ services:
       traefik.frontend.headers.STSPreload: "true"
       traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
       traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}' 
       traefik.frontend.auth.forward.address: "http://oauth:4181"
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-
+      traefik.frontend.auth.forward.trustForwardHeader: "true"      
 
 ########################################################  MEDIA PLAYERS AND UTILITIES  ########################################################
-
 
 # Picard - Music Library Tagging and Management
   picard:
@@ -565,6 +515,7 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
+#Media requests 
   ombi:
     image: linuxserver/ombi
     container_name: ombi
@@ -768,7 +719,6 @@ services:
       SECTION_MAPS: ${SYN_PLEX}/${SYN_PLEX_HOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_HOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TVSHOWS} ${NUC_PLEX}/${NUC_PLEX_TVSHOWS} | ${SYN_PLEX}/${SYN_PLEX_BOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_BOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_KOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_KOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_TOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_DOCMOVIES} ${NUC_PLEX}/${NUC_PLEX_DOCMOVIES} | ${SYN_PLEX}/${SYN_PLEX_DOCSHOWS} ${NUC_PLEX}/${NUC_PLEX_DOCSHOWS} | ${SYN_PLEX}/${SYN_PLEX_KIDSMOVIES} ${NUC_PLEX}/${NUC_PLEX_KIDSMOVIES} | ${SYN_PLEX}/${SYN_PLEX_INTERNATIONAL} ${NUC_PLEX}/${NUC_PLEX_INTERNATIONAL}
     restart: unless-stopped
 
-
 # Bazarr - Subtitle Management
   bazarr:
     image: linuxserver/bazarr
@@ -814,9 +764,7 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
-
 ########################################################  FILE UTILITIES ########################################################
-
 
 # FileBot - File renamer
   filebot:
@@ -966,67 +914,6 @@ services:
 
 ########################################################  CONNECTION  ########################################################
 
-# Guacamole - Remote desktop, SSH, on Telnet on any HTML5 Browser 
-# Create all databases and tables first
-  ## https://guacamole.apache.org/doc/gug/guacamole-docker.html#guacamole-docker-mysql
-  ## create database guacamole
-  ## mysql --user="fabrice" --database="guacamole" -p < /tmp/initdb.sql
-
-  guacamole:
-    image: guacamole/guacamole
-    container_name: guacamole
-    hostname: guacamole
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    ports:
-      - "${GUACAMOLE_PORT}:8080"
-    links:
-      - guacd:guacd
-      - mariadb:mysql
-    depends_on:
-      - mariadb
-    environment:
-      GUACD_HOSTNAME: guacd
-      # MYSQL_HOSTNAME: ${DB_HOST}mariadb
-      MYSQL_HOSTNAME: mariadb
-      MYSQL_PORT: ${DB_PORT}
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: ${GUAC_MYSQL_USER}
-      MYSQL_PASSWORD: ${GUAC_MYSQL_PASSWORD}
-    labels:
-      traefik.enable: "true"
-      traefik.backend: guacamole
-      traefik.protocol: http
-      traefik.port: 8080
-      traefik.frontend.rule: "Host:guac.${DOMAINNAME}; AddPrefix: /guacamole"
-      # traefik.frontend.rule: Host:guac.${DOMAINNAME}
-      traefik.frontend.headers.SSLHost: guac.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-
-# Guacamole Daemon - Needed for Guacamole
-  guacd:
-    image: guacamole/guacd
-    container_name: guacd
-    hostname: guacd
-    restart: unless-stopped
-
 # StatPing - Status Page & Monitoring Server
   statping:
     image: hunterlong/statping
@@ -1078,7 +965,6 @@ services:
 
 ######################################################## MAINTENANCE  ########################################################
 
-
 # Ouroboros - Automatic Docker Container Updates
   ouroboros:
     image: pyouroboros/ouroboros
@@ -1120,5 +1006,4 @@ services:
 #       TZ: ${TZ}
 
 ######################################################## THE END  ########################################################
-###################################################################################################################
 
