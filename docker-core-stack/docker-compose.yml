@@ -246,5 +246,17 @@ services:
         - /var/run/docker.sock:/var/run/docker.sock
       command: --interval 3600
 
+#DD Client
+  ddclient:
+    image: linuxserver/ddclient
+    container_name: ddclient
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${USERDIR}/docker/ddclient:/config
+    restart: unless-stopped
+
 ##################################################### THE END #######################################################
 ######################################################################################################################       
