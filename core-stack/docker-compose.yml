@@ -28,7 +28,7 @@ services:
       - "${TRAEFIK_DASHBOARD_PORT}:8080"
     domainname: ${DOMAINNAME}
     dns:
-#      - ${PIHOLE_IP}
+      # - ${PIHOLE_IP}
        - 1.1.1.1
        - 192.168.1.1
        - 208.67.222.222
@@ -216,10 +216,10 @@ services:
       traefik.backend: heimdall
       traefik.protocol: http
       traefik.port: 80
-      traefik.frontend.rule: Host:${DOMAINNAME},www.${DOMAINNAME}  #changed - FS
-      traefik.frontend.headers.SSLHost: ${DOMAINNAME}  #changed - FS
-#      traefik.frontend.rule: Host:heim.${DOMAINNAME} #changed - FS
-#      traefik.frontend.headers.SSLHost: heim.${DOMAINNAME} #changed - FS
+      # traefik.frontend.rule: Host:${DOMAINNAME},www.${DOMAINNAME}  #changed - FS
+      # traefik.frontend.headers.SSLHost: ${DOMAINNAME}  #changed - FS
+      traefik.frontend.rule: Host:heim.${DOMAINNAME} #changed - FS
+      traefik.frontend.headers.SSLHost: heim.${DOMAINNAME} #changed - FS
       traefik.docker.network: traefik_proxy
       traefik.frontend.passHostHeader: "true"
       traefik.frontend.headers.SSLForceHost: "true"
