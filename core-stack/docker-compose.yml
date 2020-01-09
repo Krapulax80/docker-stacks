@@ -132,7 +132,7 @@ services:
       - "${SERVER_IP}:53:53/tcp"
       - "${SERVER_IP}:53:53/udp"
     volumes:
-      - ${USERDIR}/docker/webmin/bind_data:/data
+      - ${USERDIR}/docker/bind:/data
     environment:
       - ROOT_PASSWORD=${WEBMIN_PASSWD}
     labels:

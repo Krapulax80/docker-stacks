@@ -21,7 +21,7 @@ services:
     image: mysql:5.7
     restart: always
     volumes:
-      - ./data:/var/lib/mysql
+      - /home/fabrice/docker/mysql/data:/var/lib/mysql
     labels:
       - "traefik.enable=false"
     networks:

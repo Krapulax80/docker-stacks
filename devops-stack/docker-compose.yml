@@ -11,7 +11,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 10.1.1.0/28
+         - subnet: 192.168.6.0/24
 
 services:
 
@@ -29,7 +29,7 @@ services:
     networks:
       traefik_proxy:
       custom:
-        ipv4_address: 10.1.1.4
+        ipv4_address: 192.168.6.4
     domainname: ${DOMAINNAME}
     hostname: jenkins
     restart: unless-stopped
@@ -68,7 +68,7 @@ services:
     networks:
       traefik_proxy:
       custom:
-        ipv4_address: 10.1.1.5
+        ipv4_address: 192.168.6.5
     domainname: fabricesemti.com
     hostname: artifactory
     restart: unless-stopped

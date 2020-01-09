@@ -6,7 +6,10 @@ networks:
     external:
       name: traefik_proxy
   default:
-    driver: bridge
+    ipam:
+      driver: default
+      config:
+         - subnet: 192.168.3.0/24
 
 services:
 
