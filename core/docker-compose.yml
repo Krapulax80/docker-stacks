@@ -10,11 +10,11 @@ networks:
     ipam:
       driver: default
       config:
-         - subnet: 192.168.2.0/24
-
-services:
+         - subnet: 192.168.0.0/24
 
 ##################################################### FRONTENDS & CRITICAL APPS  ###################################################### 
+
+services:
 
 # Traefik - Reverse Proxy
 # Create traefik.toml and rules dir and acme dir before running container.
@@ -115,51 +115,18 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
-# Bind DNS with Webmin
-# also see for configuration:  https://www.digitalocean.com/community/tutorials/how-to-configure-bind-as-a-private-network-dns-server-on-ubuntu-18-04
-# https://www.dropbox.com/sh/k70ds7890cpl0pk/AACxAFAH3W_hz4zldbajsmHOa?dl=0
-
-  bind:
-    image: sameersbn/bind:9.9.5-20170129
-    container_name: bind
-    hostname: bind
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    ports:
-      - "${WEBMIN_PORT}:10000"
-      - "${SERVER_IP}:53:53/tcp"
-      - "${SERVER_IP}:53:53/udp"
-    volumes:
-      - ${USERDIR}/docker/bind:/data
+#DD Client
+  ddclient:
+    image: linuxserver/ddclient
+    container_name: ddclient
     environment:
-      - ROOT_PASSWORD=${WEBMIN_PASSWD}
-    labels:
-      traefik.enable: "true"
-      traefik.backend: bind
-      traefik.protocol: http
-      traefik.port: 10000
-      traefik.frontend.rule: "Host:bind.${DOMAINNAME}"
-      traefik.frontend.headers.SSLHost: bind.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-      traefik.frontend.auth.basic.users: '${HTTP_USERNAME}:${HTTP_PASSWORD}'
-
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${USERDIR}/docker/ddclient:/config
+    restart: unless-stopped
+    
 # Portainer - Container Management
 # Needs trailing / in the URL if using PathPrefixStrip
   portainer:
@@ -201,23 +168,49 @@ services:
       traefik.frontend.auth.forward.address: "http://oauth:4181"
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
-
-# Lazydocker
-
-  lazydocker:
-    build:
-      context: https://github.com/jesseduffield/lazydocker.git
-      args:
-        BASE_IMAGE_BUILDER: golang
-        GOARCH: amd64
-        GOARM:
-    image: lazyteam/lazydocker
-    container_name: lazydocker
-    stdin_open: true
-    tty: true
+  
+# Taisun - Portrainer alternative - https://hub.docker.com/r/linuxserver/taisun
+  taisun:
+    image: linuxserver/taisun
+    container_name: taisun
+    hostname: taisun
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+    ports:
+      - "${TAISUN_PORT}:3000"
+    command: -H unix:///var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/fabrice/docker/lazydocker/config:/.config/jesseduffield/lazydocker  
+      - ${USERDIR}/docker/taisun/data:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    labels:
+      traefik.enable: "true"
+      traefik.backend: taisun
+      traefik.protocol: http
+      traefik.port: 3000
+      traefik.frontend.rule: Host:taisun.${DOMAINNAME}
+#      traefik.frontend.rule: Host${DOMAINNAME}; PathPrefixStrip: /taisun
+      traefik.frontend.headers.SSLHost: taisun.${DOMAINNAME}
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: "true"
+      traefik.frontend.headers.SSLForceHost: "true"
+      traefik.frontend.headers.SSLRedirect: "true"
+      traefik.frontend.headers.browserXSSFilter: "true"
+      traefik.frontend.headers.contentTypeNosniff: "true"
+      traefik.frontend.headers.forceSTSHeader: "true"
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: "true"
+      traefik.frontend.headers.STSPreload: "true"
+      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+      traefik.frontend.headers.frameDeny: "true"
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: "http://oauth:4181"
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: "true"  
 
 # Heimdall - Unified Frontend Alternative Putting all services behind Oragnizr slows things down.
   heimdall:
@@ -261,6 +254,75 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
+# SyncThing - syncing docker configuration to other devices
+  syncthing:
+    image: linuxserver/syncthing
+    container_name: syncthing
+    hostname: syncthing
+    networks:
+      - traefik_proxy
+      - default
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      UMASK_SET: 022
+    volumes:
+      - ${USERDIR}/docker/syncthing/config:/config
+      - ${USERDIR}/docker:/docker-data
+      - ${USERDIR}/docker-stacks:/data-stack-data
+    ports:
+      - ${SYNCTHING_DASHBOARD_PORT}:8384
+      - 22000:22000
+      - 21027:21027/udp
+    restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.backend: syncthing
+      traefik.protocol: http
+      traefik.port: 8384
+      traefik.frontend.rule: Host:syncthing.${DOMAINNAME}
+#     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /syncthing
+      traefik.frontend.headers.SSLHost: syncthing.${DOMAINNAME}
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: "true"
+      traefik.frontend.headers.SSLForceHost: "true"
+      traefik.frontend.headers.SSLRedirect: "true"
+      traefik.frontend.headers.browserXSSFilter: "true"
+      traefik.frontend.headers.contentTypeNosniff: "true"
+      traefik.frontend.headers.forceSTSHeader: "true"
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: "true"
+      traefik.frontend.headers.STSPreload: "true"
+      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+      traefik.frontend.headers.frameDeny: "true"
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: "http://oauth:4181"
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: "true"    
+
+######################################################## MAINTENANCE  ########################################################
+
+# Docker-GC - Automatic Docker Garbage Collection 
+# Create docker-gc-exclude file - https://github.com/clockworksoul/docker-gc-cron
+  dockergc:
+    image: clockworksoul/docker-gc-cron:latest
+    container_name: docker-gc
+    hostname: docker-gc
+    restart: unless-stopped
+    network_mode: none
+    volumes:
+     # - /var/run/docker.sock:/var/run/docker.sock
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ${USERDIR}/docker/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
+    environment:
+      CRON: 0 0 * * *
+      FORCE_IMAGE_REMOVAL: 1
+      FORCE_CONTAINER_REMOVAL: 0
+      GRACE_PERIOD_SECONDS: 604800
+      DRY_RUN: 0
+      CLEAN_UP_VOLUMES: 1
+      TZ: ${TZ}
 #Watchtower - application to update all docker containers, if  new image available
   watchtower:
       image: v2tec/watchtower
@@ -270,17 +332,21 @@ services:
         - /var/run/docker.sock:/var/run/docker.sock
       command: --interval 3600
 
-#DD Client
-  ddclient:
-    image: linuxserver/ddclient
-    container_name: ddclient
-    environment:
-      PUID: ${PUID}
-      PGID: ${PGID}
-      TZ: ${TZ}
-    volumes:
-      - ${USERDIR}/docker/ddclient:/config
-    restart: unless-stopped
-
-##################################################### THE END #######################################################
-######################################################################################################################       
+# # Ouroboros - Automatic Docker Container Updates - alternative to watchtower
+  # ouroboros:
+    # image: pyouroboros/ouroboros
+    # container_name: ouroboros
+    # hostname: ouroboros
+    # restart: unless-stopped
+    # networks:
+      # - default
+    # volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock
+    # environment:
+      # TZ: ${TZ}
+      # INTERVAL: 86400
+      # LOG_LEVEL: debug
+      # SELF_UPDATE: "true"
+      # CLEANUP: "true"
+      # IGNORE: traefik influxdb hassio_dns homeassistant hassio_supervisor addon_core_check_config addon_62c7908d_autobackup plexms
+      # NOTIFIERS: 'tgram://${TGRAM_BOT_TOKEN}/${TGRAM_CHAT_ID}/'

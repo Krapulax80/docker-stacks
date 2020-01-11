@@ -1,0 +1,18 @@
+version: '3.1'
+
+##################################################### DNS SERVICE FOR LOCAL NETWORK  ###################################################### 
+
+services:
+
+    coredns:
+        build: .
+        container_name: coredns
+        restart: always  #on-failure # other option: always - if you want persistent through host reboots
+        expose:
+            - '53'
+            - '53/udp'
+        ports:
+            - '53:53'
+            - '53:53/udp'
+        volumes:
+            - '/home/fabrice/docker/coredns/config:/etc/coredns'

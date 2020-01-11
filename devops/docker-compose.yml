@@ -11,7 +11,9 @@ networks:
     ipam:
       driver: default
       config:
-         - subnet: 192.168.6.0/24
+         - subnet: 192.168.4.0/24
+
+##################################################### DEVOPS TEST TOOLS  ###################################################### 
 
 services:
 
@@ -24,12 +26,12 @@ services:
       - "50000:50000"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/home/fabrice/docker/jenkins/jenkins_home:/var/jenkins_home"
-      # - "/home/fabrice/docker/jenkins/var_jenkins:/var/lib/jenkins"
+      - "${USERDIR}/docker/jenkins/jenkins_home:/var/jenkins_home"
+      - "${USERDIR}/docker/jenkins/var_jenkins:/var/lib/jenkins"
     networks:
       traefik_proxy:
       custom:
-        ipv4_address: 192.168.6.4
+        ipv4_address: 192.168.4.4
     domainname: ${DOMAINNAME}
     hostname: jenkins
     restart: unless-stopped
@@ -68,7 +70,7 @@ services:
     networks:
       traefik_proxy:
       custom:
-        ipv4_address: 192.168.6.5
+        ipv4_address: 192.168.4.5
     domainname: fabricesemti.com
     hostname: artifactory
     restart: unless-stopped
