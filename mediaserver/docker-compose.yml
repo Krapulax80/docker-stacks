@@ -127,6 +127,8 @@ services:
       - ${USERDIR}/docker/logarr/config:/config
       - ${USERDIR}/docker/logarr/logs:/var/log/logarrlogs
     environment:
+      PUID: ${PUID}
+      PGID: ${PGID}      
       TZ: ${TZ}
     labels:
       traefik.enable: "true"
@@ -236,8 +238,6 @@ services:
       - default
     volumes:
       - ${USERDIR}/docker/varken:/config
-    depends_on:
-      - "influxdb"      
     environment:
       PUID: ${PUID}
       PGID: ${PGID}
@@ -246,7 +246,7 @@ services:
       VRKN_GLOBAL_RADARR_SERVER_IDS: 1
       VRKN_GLOBAL_LIDARR_SERVER_IDS: "false"
       VRKN_GLOBAL_TAUTULLI_SERVER_IDS: 1
-      VRKN_GLOBAL_OMBI_SERVER_IDS: "false"
+      VRKN_GLOBAL_OMBI_SERVER_IDS: 1
       VRKN_GLOBAL_SICKCHILL_SERVER_IDS: "false"
       VRKN_GLOBAL_UNIFI_SERVER_IDS: 1
       VRKN_INFLUXDB_URL: ${SERVER_IP}
@@ -282,6 +282,16 @@ services:
       VRKN_RADARR_1_QUEUE_RUN_SECONDS: 300
       VRKN_RADARR_1_GET_MISSING: "true"
       VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: 300
+      VRKN_OMBI_1_URL: ${SERVER_IP}:${OMBI_PORT}
+      VRKN_OMBI_1_APIKEY: ${OMBI_API_KEY}
+      VRKN_OMBI_1_SSL: "false"
+      VRKN_OMBI_1_VERIFY_SSL: "false"
+      VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS: "true"
+      VRKN_OMBI_1_REQUEST_TYPE_RUN_SECONDS: 300
+      VRKN_OMBI_1_GET_REQUEST_TOTAL_COUNTS: "true"
+      VRKN_OMBI_1_REQUEST_TOTAL_RUN_SECONDS: 300
+      VRKN_OMBI_1_GET_ISSUE_STATUS_COUNTS: "true"
+      VRKN_OMBI_1_ISSUE_STATUS_RUN_SECONDS: 300
       VRKN_UNIFI_1_URL: ${UNIFI_HOST}
       VRKN_UNIFI_1_USERNAME: ${UNIFI_USER}
       VRKN_UNIFI_1_PASSWORD: ${UNIFI_PASS}
@@ -290,6 +300,7 @@ services:
       VRKN_UNIFI_1_SSL: "true"
       VRKN_UNIFI_1_VERIFY_SSL: "false"
       VRKN_UNIFI_1_GET_USG_STATS_RUN_SECONDS: 300
+      VRKN_GLOBAL_MAXMIND_LICENSE_KEY: J6euK2hRknBnygBr
 
 ########################################################  DOWNLOADERS / INDEXERS  ########################################################
 
