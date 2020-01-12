@@ -9,6 +9,7 @@ networks:
       driver: default
       config:
          - subnet: 192.168.5.0/24
+         
 #    driver: bridge
 #    external:
 #      name: external
@@ -17,6 +18,51 @@ networks:
 
 services:
 
+########################################################  HOME ASSISTANT  ########################################################
+  homeassistant:
+    container_name: homeassistant
+    restart: unless-stopped
+    image: homeassistant/home-assistant
+    devices:
+      - ${HDD01}:/hdd01
+      - ${HDD02}:/hdd02
+    volumes:
+      - ${USERDIR}/docker/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - ${USERDIR}/docker/shared:/shared
+    ports:
+      - "${HOME_ASSISTANT_PORT}:8123"
+    privileged: true
+    networks:
+      - traefik_proxy    
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    labels:
+      traefik.enable: "true"
+      traefik.backend: homeassistant
+      traefik.protocol: http
+      traefik.port: 8123
+      traefik.frontend.rule: "Host:homeassistant.${DOMAINNAME}"
+      traefik.frontend.headers.SSLHost: homeassistant.${DOMAINNAME}
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: "true"
+      traefik.frontend.headers.SSLForceHost: "true"
+      traefik.frontend.headers.SSLRedirect: "true"
+      traefik.frontend.headers.browserXSSFilter: "true"
+      traefik.frontend.headers.contentTypeNosniff: "true"
+      traefik.frontend.headers.forceSTSHeader: "true"
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: "true"
+      traefik.frontend.headers.STSPreload: "true"
+      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+      traefik.frontend.headers.frameDeny: "true"
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: "http://oauth:4181"
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: "true"      
+      
 ########################################################  SYSTEM MONITORING ########################################################
 
 # Glances - System Information
@@ -64,7 +110,7 @@ services:
 
 # StatPing - Status Page & Monitoring Server
   statping:
-    image: hunterlong/statping
+    image: hunterlong/statping:latest
     container_name: statping
     hostname: statping
     restart: unless-stopped
@@ -112,47 +158,8 @@ services:
       traefik.frontend.auth.forward.trustForwardHeader: "true"
     depends_on:
       - "postgres"     
-
-# Logarr - Log Management
-  logarr:
-    image: monitorr/logarr
-    container_name: logarr
-    hostname: logarr
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-    ports:
-     - "${LOGARR_PORT}:80"
-    volumes:
-      - ${USERDIR}/docker/logarr/config:/config
-      - ${USERDIR}/docker/logarr/logs:/var/log/logarrlogs
-    environment:
-      PUID: ${PUID}
-      PGID: ${PGID}      
-      TZ: ${TZ}
-    labels:
-      traefik.enable: "true"
-      traefik.backend: logarr
-      traefik.protocol: http
-      traefik.port: 80
-      traefik.frontend.rule: Host:logarr.${DOMAINNAME}
-      traefik.frontend.headers.SSLHost: logarr.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-#      traefik.frontend.headers.frameDeny: "true" #customFrameOptionsValue overrides this
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
+    links:  
+    - "postgres" 
 
 # Postgres - Database
   postgres:
@@ -244,7 +251,7 @@ services:
       TZ: ${TZ}
       VRKN_GLOBAL_SONARR_SERVER_IDS: 1
       VRKN_GLOBAL_RADARR_SERVER_IDS: 1
-      VRKN_GLOBAL_LIDARR_SERVER_IDS: "false"
+      VRKN_GLOBAL_LIDARR_SERVER_IDS: 1
       VRKN_GLOBAL_TAUTULLI_SERVER_IDS: 1
       VRKN_GLOBAL_OMBI_SERVER_IDS: 1
       VRKN_GLOBAL_SICKCHILL_SERVER_IDS: "false"
@@ -274,6 +281,16 @@ services:
       VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS: 300
       VRKN_SONARR_1_QUEUE: "true"
       VRKN_SONARR_1_QUEUE_RUN_SECONDS: 300
+      VRKN_LIDARR_1_URL: ${SERVER_IP}:${LIDARR_PORT}
+      VRKN_LIDARR_1_APIKEY: ${LIDARR_API_KEY}
+      VRKN_LIDARR_1_SSL: "false"
+      VRKN_LIDARR_1_VERIFY_SSL: "false"
+      VRKN_LIDARR_1_MISSING_DAYS: 30
+      VRKN_LIDARR_1_MISSING_DAYS_RUN_SECONDS: 300 ${LIDARR_API_KEY}
+      VRKN_LIDARR_1_FUTURE_DAYS: 30
+      VRKN_LIDARR_1_FUTURE_DAYS_RUN_SECONDS: 300
+      VRKN_LIDARR_1_QUEUE: "true"
+      VRKN_LIDARR_1_QUEUE_RUN_SECONDS: 300      
       VRKN_RADARR_1_URL: ${SERVER_IP}:${RADARR_PORT}
       VRKN_RADARR_1_APIKEY: ${RADARR_API_KEY}
       VRKN_RADARR_1_SSL: "false"

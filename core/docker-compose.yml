@@ -44,9 +44,13 @@ services:
       - ${USERDIR}/docker/traefik:/etc/traefik
       - ${USERDIR}/docker/shared:/shared
     environment:
-      CF_API_EMAIL: ${CLOUDFLARE_EMAIL}
-      CF_API_KEY: ${CLOUDFLARE_API_KEY}
-      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN}
+      # CF_API_EMAIL: ${CLOUDFLARE_EMAIL}
+      # CF_API_KEY: ${CLOUDFLARE_API_KEY}
+      # DUCKDNS_TOKEN: ${DUCKDNS_TOKEN}
+      GCE_PROJECT: "Traefik Authentication"
+      GCE_SERVICE_ACCOUNT: "Google DNS"
+      GCE_SERVICE_ACCOUNT_FILE: "/home/fabrice/docker/google-clouddns/Traefik Authentication-e4e3a01e2806.json"
+      GCE_POLLING_INTERVAL: 5
     labels:
       traefik.enable: "true"
       traefik.backend: traefik
@@ -315,7 +319,7 @@ services:
       TZ: ${TZ}
       UMASK_SET: 022
     volumes:
-      - ~:/root
+      # - ~:/root
       - /:/mnt/fs
     ports:
       - ${CLOUD_CMDR_PORT}:8000
@@ -369,7 +373,8 @@ services:
       TZ: ${TZ}
 #Watchtower - application to update all docker containers, if  new image available
   watchtower:
-      image: v2tec/watchtower
+      # image: v2tec/watchtower
+      image: containrrr/watchtower
       container_name: watchtower
       restart: always
       volumes:

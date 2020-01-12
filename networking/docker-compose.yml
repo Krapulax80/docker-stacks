@@ -16,3 +16,6 @@ services:
             - '53:53/udp'
         volumes:
             - '/home/fabrice/docker/coredns/config:/etc/coredns'
+        labels:
+            com.centurylinklabs.watchtower.enable: "false"    
+        
