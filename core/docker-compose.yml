@@ -11,10 +11,8 @@ networks:
       driver: default
       config:
          - subnet: 192.168.0.0/24
-
+services:         
 ##################################################### FRONTENDS & CRITICAL APPS  ###################################################### 
-
-services:
 
 # Traefik - Reverse Proxy
 # Create traefik.toml and rules dir and acme dir before running container.
@@ -172,50 +170,7 @@ services:
       traefik.frontend.auth.forward.address: "http://oauth:4181"
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
-  
-# # Taisun - Portrainer alternative - https://hub.docker.com/r/linuxserver/taisun
-#   taisun:
-#     image: linuxserver/taisun
-#     container_name: taisun
-#     hostname: taisun
-#     restart: unless-stopped
-#     networks:
-#       - traefik_proxy
-#     ports:
-#       - "${TAISUN_PORT}:3000"
-#     command: -H unix:///var/run/docker.sock
-#     volumes:
-#       - /var/run/docker.sock:/var/run/docker.sock
-#       - ${USERDIR}/docker/taisun/data:/data
-#     environment:
-#       PUID: ${PUID}
-#       PGID: ${PGID}
-#       TZ: ${TZ}
-#     labels:
-#       traefik.enable: "true"
-#       traefik.backend: taisun
-#       traefik.protocol: http
-#       traefik.port: 3000
-#       traefik.frontend.rule: Host:taisun.${DOMAINNAME}
-# #      traefik.frontend.rule: Host${DOMAINNAME}; PathPrefixStrip: /taisun
-#       traefik.frontend.headers.SSLHost: taisun.${DOMAINNAME}
-#       traefik.docker.network: traefik_proxy
-#       traefik.frontend.passHostHeader: "true"
-#       traefik.frontend.headers.SSLForceHost: "true"
-#       traefik.frontend.headers.SSLRedirect: "true"
-#       traefik.frontend.headers.browserXSSFilter: "true"
-#       traefik.frontend.headers.contentTypeNosniff: "true"
-#       traefik.frontend.headers.forceSTSHeader: "true"
-#       traefik.frontend.headers.STSSeconds: 315360000
-#       traefik.frontend.headers.STSIncludeSubdomains: "true"
-#       traefik.frontend.headers.STSPreload: "true"
-#       traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-#       traefik.frontend.headers.frameDeny: "true"
-#       traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-#       traefik.frontend.auth.forward.address: "http://oauth:4181"
-#       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-#       traefik.frontend.auth.forward.trustForwardHeader: "true"  
-
+ 
 # Heimdall - Unified Frontend Alternative Putting all services behind Oragnizr slows things down.
   heimdall:
     image: linuxserver/heimdall
@@ -258,52 +213,52 @@ services:
       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
       traefik.frontend.auth.forward.trustForwardHeader: "true"
 
-# SyncThing - syncing docker configuration to other devices
-  syncthing:
-    image: linuxserver/syncthing
-    container_name: syncthing
-    hostname: syncthing
-    networks:
-      - traefik_proxy
-      - default
-    environment:
-      PUID: ${PUID}
-      PGID: ${PGID}
-      TZ: ${TZ}
-      UMASK_SET: 022
-    volumes:
-      - ${USERDIR}/docker/syncthing/config:/config
-      - ${USERDIR}/docker:/docker-data
-      - ${USERDIR}/docker-stacks:/data-stack-data
-    ports:
-      - ${SYNCTHING_DASHBOARD_PORT}:8384
-      - 22000:22000
-      - 21027:21027/udp
-    restart: unless-stopped
-    labels:
-      traefik.enable: "true"
-      traefik.backend: syncthing
-      traefik.protocol: http
-      traefik.port: 8384
-      traefik.frontend.rule: Host:syncthing.${DOMAINNAME}
-#     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /syncthing
-      traefik.frontend.headers.SSLHost: syncthing.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"    
+# # SyncThing - syncing docker configuration to other devices
+#   syncthing:
+#     image: linuxserver/syncthing
+#     container_name: syncthing
+#     hostname: syncthing
+#     networks:
+#       - traefik_proxy
+#       - default
+#     environment:
+#       PUID: ${PUID}
+#       PGID: ${PGID}
+#       TZ: ${TZ}
+#       UMASK_SET: 022
+#     volumes:
+#       - ${USERDIR}/docker/syncthing/config:/config
+#       - ${USERDIR}/docker:/docker-data
+#       - ${USERDIR}/docker-stacks:/data-stack-data
+#     ports:
+#       - ${SYNCTHING_DASHBOARD_PORT}:8384
+#       - 22000:22000
+#       - 21027:21027/udp
+#     restart: unless-stopped
+#     labels:
+#       traefik.enable: "true"
+#       traefik.backend: syncthing
+#       traefik.protocol: http
+#       traefik.port: 8384
+#       traefik.frontend.rule: Host:syncthing.${DOMAINNAME}
+# #     traefik.frontend.rule: Host:${DOMAINNAME}; PathPrefix: /syncthing
+#       traefik.frontend.headers.SSLHost: syncthing.${DOMAINNAME}
+#       traefik.docker.network: traefik_proxy
+#       traefik.frontend.passHostHeader: "true"
+#       traefik.frontend.headers.SSLForceHost: "true"
+#       traefik.frontend.headers.SSLRedirect: "true"
+#       traefik.frontend.headers.browserXSSFilter: "true"
+#       traefik.frontend.headers.contentTypeNosniff: "true"
+#       traefik.frontend.headers.forceSTSHeader: "true"
+#       traefik.frontend.headers.STSSeconds: 315360000
+#       traefik.frontend.headers.STSIncludeSubdomains: "true"
+#       traefik.frontend.headers.STSPreload: "true"
+#       traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+#       traefik.frontend.headers.frameDeny: "true"
+#       traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+#       traefik.frontend.auth.forward.address: "http://oauth:4181"
+#       traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+#       traefik.frontend.auth.forward.trustForwardHeader: "true"    
 
 #Cloud commander
   cloudcommander:

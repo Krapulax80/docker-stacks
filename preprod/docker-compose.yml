@@ -1,0 +1,116 @@
+version: '2.3'
+
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  default:
+#    driver: bridge
+    ipam:
+      driver: default
+      config:
+         - subnet: 192.168.10.0/24
+services:
+
+  # nginx:
+    # container_name: nginx
+    # image: jwilder/nginx-proxy
+    # ports:
+      # - 0.0.0.0:80:80
+      # - 0.0.0.0:443:443
+    # labels:
+      # - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    # networks:
+      # - traefik_proxy
+    # restart: always
+    # volumes:
+      # - /var/run/docker.sock:/tmp/docker.sock:ro
+      # - ./statping/nginx/certs:/etc/nginx/certs:ro
+      # - ./statping/nginx/vhost:/etc/nginx/vhost.d
+      # - ./statping/nginx/html:/usr/share/nginx/html:ro
+      # - ./statping/nginx/dhparam:/etc/nginx/dhparam
+    # environment:
+      # DEFAULT_HOST: ${LETSENCRYPT_HOST}
+
+  # letsencrypt:
+    # container_name: letsencrypt
+    # image: jrcs/letsencrypt-nginx-proxy-companion
+    # networks:
+      # - traefik_proxy
+    # restart: always
+    # volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+      # - ./statping/nginx/certs:/etc/nginx/certs
+      # - ./statping/nginx/vhost:/etc/nginx/vhost.d
+      # - ./statping/nginx/html:/usr/share/nginx/html
+      # - ./statping/nginx/dhparam:/etc/nginx/dhparam
+
+  statping:
+    container_name: statping
+    image: hunterlong/statping:latest
+    hostname: statping
+    restart: always
+    networks:
+      - traefik_proxy
+      -  default
+    depends_on:
+      - postgres
+    volumes:
+      - ${USERDIR}/docker/statping/app:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "${STATPING_PORT}:8080"      
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      # VIRTUAL_HOST: ${LETSENCRYPT_HOST}
+      # VIRTUAL_PORT: 8080
+      # LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      # LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      DB_CONN: postgres
+      DB_HOST: postgres
+      DB_USER: statping
+      # DB_PASS: password123
+      DB_PASS: ${STATPING_DB_PASS}
+      DB_DATABASE: statping
+      NAME: SSL Example
+      DESCRIPTION: Home Server Monitor
+    labels:
+      traefik.enable: "true"
+      traefik.backend: statping
+      traefik.protocol: http
+      traefik.port: 8080
+      traefik.frontend.rule: Host:statping.${DOMAINNAME}
+#      traefik.frontend.rule: Host${DOMAINNAME}; PathPrefixStrip: /statping
+      traefik.frontend.headers.SSLHost: statping.${DOMAINNAME}
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: "true"
+      traefik.frontend.headers.SSLForceHost: "true"
+      traefik.frontend.headers.SSLRedirect: "true"
+      traefik.frontend.headers.browserXSSFilter: "true"
+      traefik.frontend.headers.contentTypeNosniff: "true"
+      traefik.frontend.headers.forceSTSHeader: "true"
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: "true"
+      traefik.frontend.headers.STSPreload: "true"
+      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+      traefik.frontend.headers.frameDeny: "true"
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: "http://oauth:4181"
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: "true"        
+
+  postgres:
+    container_name: postgres
+    image: postgres:10
+    restart: always
+    networks:
+      -  default
+    volumes:
+      - ${USERDIR}/docker/statping/postgres:/var/lib/postgresql/data
+    environment:
+      # POSTGRES_PASSWORD: password123
+      POSTGRES_PASSWORD: ${STATPING_DB_PASS}
+      POSTGRES_USER: statping
+      POSTGRES_DB: statping

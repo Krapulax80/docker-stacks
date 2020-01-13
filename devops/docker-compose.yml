@@ -34,6 +34,7 @@ services:
         ipv4_address: 192.168.4.4
     domainname: ${DOMAINNAME}
     hostname: jenkins
+    container_name: jenkins
     restart: unless-stopped
     environment:
       TZ: ${TZ}
@@ -73,6 +74,7 @@ services:
         ipv4_address: 192.168.4.5
     domainname: fabricesemti.com
     hostname: artifactory
+    container_name: artifactory
     restart: unless-stopped
     labels:
       traefik.enable: "true"
