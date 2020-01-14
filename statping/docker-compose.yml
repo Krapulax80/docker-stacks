@@ -1,18 +1,15 @@
 version: '2.3'
-
 networks:
-  traefik_proxy:
-    external:
-      name: traefik_proxy
-  default:
-#    driver: bridge
-    ipam:
-      driver: default
-      config:
-         - subnet: 192.168.6.0/24
+    traefik_proxy:
+        external:
+            name: traefik_proxy
+    default:
+        ipam:
+            driver: default
+            config: [{subnet: 192.168.6.0/24}]
 services:
-# Statping - display your service availability        
-   statping:
+ # Statping - availability monitor
+    statping:
         container_name: statping
         image: 'hunterlong/statping:latest'
         hostname: statping
@@ -61,7 +58,7 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
-# Postgres -  Database for Statping            
+ # Postgres - database for Statping            
     postgres:
         container_name: postgres
         image: 'postgres:10'
