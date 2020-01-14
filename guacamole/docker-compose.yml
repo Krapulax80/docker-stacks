@@ -1,103 +1,84 @@
-##################################################### SHARED PART ################################################################
-version: "3.7"
-
+version: '3.7'
 networks:
-  traefik_proxy:
-    external:
-      name: traefik_proxy
-  default:
-    ipam:
-      driver: default
-      config:
-         - subnet: 192.168.2.0/24
-########################################################  GUACAMOLE STACK  ########################################################
+    traefik_proxy:
+        external:
+            name: traefik_proxy
+    default:
+        ipam:
+            driver: default
+            config: [{subnet: 192.168.2.0/24}]
 services:
-
-  # ##MariaDB
-  mariadb:
-    image: mariadb
-    # command: --default-authentication-plugin=mysql_native_password
-    container_name: mariadb
-    hostname: mariadb
-    ports:
-      - '${DB_PORT}:3306'
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    volumes:
-      - '${USERDIR}/docker/mariadb/var:/var/lib/mysql'
-      - '${USERDIR}/docker/mariadb/etc:/etc/mysql'    
-      - '${USERDIR}/docker/mariadb/initdb.sql:/tmp/initdb.sql'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      # - ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}   
-
-# Guacamole - Remote desktop, SSH, on Telnet on any HTML5 Browser 
-# Create all databases and tables first
-  ## https://guacamole.apache.org/doc/gug/guacamole-docker.html#guacamole-docker-mysql
-  ## create database guacamole
-  ## mysql --user="fabrice" --database="guacamole" -p < /tmp/initdb.sql
-
-  guacamole:
-    image: guacamole/guacamole
-    container_name: guacamole
-    hostname: guacamole
-    restart: unless-stopped
-    networks:
-      - traefik_proxy
-      - default
-    ports:
-      - "${GUACAMOLE_PORT}:8080"
-    links:
-      - guacd:guacd
-      - mariadb:mysql
-    depends_on:
-      - mariadb
-    environment:
-      GUACD_HOSTNAME: guacd
-      # MYSQL_HOSTNAME: ${DB_HOST}mariadb
-      MYSQL_HOSTNAME: mariadb
-      MYSQL_PORT: ${DB_PORT}
-      MYSQL_DATABASE: guacamole
-      MYSQL_USER: ${GUAC_MYSQL_USER}
-      MYSQL_PASSWORD: ${GUAC_MYSQL_PASSWORD}
-    labels:
-      traefik.enable: "true"
-      traefik.backend: guacamole
-      traefik.protocol: http
-      traefik.port: 8080
-      traefik.frontend.rule: "Host:guac.${DOMAINNAME}; AddPrefix: /guacamole"
-      # traefik.frontend.rule: Host:guac.${DOMAINNAME}
-      traefik.frontend.headers.SSLHost: guac.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-
-# Guacamole Daemon - Needed for Guacamole
-  guacd:
-    image: guacamole/guacd
-    container_name: guacd
-    hostname: guacd
-    restart: unless-stopped
-
-
+ # MariaDB - database for Guacamole's remote access
+    mariadb:
+        image: mariadb
+        container_name: mariadb
+        hostname: mariadb
+        ports:
+            - '${DB_PORT}:3306'
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+            - default
+        volumes:
+            - '${USERDIR}/docker/mariadb/var:/var/lib/mysql'
+            - '${USERDIR}/docker/mariadb/etc:/etc/mysql'
+            - '${USERDIR}/docker/mariadb/initdb.sql:/tmp/initdb.sql'
+        environment:
+            - 'MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}'
+            - 'MYSQL_USER=${MYSQL_USER}'
+            - 'MYSQL_PASSWORD=${MYSQL_PASSWORD}'
+            - 'PUID=${PUID}'
+            - 'PGID=${PGID}'
+            - 'TZ=${TZ}'
+# Guacamole - remote access [SSH] from browser            
+    guacamole:
+        image: guacamole/guacamole
+        container_name: guacamole
+        hostname: guacamole
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+            - default
+        ports:
+            - '${GUACAMOLE_PORT}:8080'
+        links:
+            - 'guacd:guacd'
+            - 'mariadb:mysql'
+        depends_on:
+            - mariadb
+        environment:
+            GUACD_HOSTNAME: guacd
+            MYSQL_HOSTNAME: mariadb
+            MYSQL_PORT: '${DB_PORT}'
+            MYSQL_DATABASE: guacamole
+            MYSQL_USER: '${GUAC_MYSQL_USER}'
+            MYSQL_PASSWORD: '${GUAC_MYSQL_PASSWORD}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: guacamole
+            traefik.protocol: http
+            traefik.port: 8080
+            traefik.frontend.rule: 'Host:guac.${DOMAINNAME}; AddPrefix: /guacamole'
+            traefik.frontend.headers.SSLHost: 'guac.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# Guacd - daemon for Guacamole            
+    guacd:
+        image: guacamole/guacd
+        container_name: guacd
+        hostname: guacd
+        restart: unless-stopped

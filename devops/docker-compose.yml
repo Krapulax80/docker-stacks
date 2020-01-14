@@ -1,102 +1,88 @@
 version: '2'
- 
- #note; this stack relies on a working Traefik proxy and relevant network present.
- 
 networks:
-  traefik_proxy:
-      external:
-        name: traefik_proxy
-  custom:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-         - subnet: 192.168.4.0/24
-
-##################################################### DEVOPS TEST TOOLS  ###################################################### 
-
+    traefik_proxy:
+        external:
+            name: traefik_proxy
+    custom:
+        driver: bridge
+        ipam:
+            driver: default
+            config: [{subnet: 192.168.4.0/24}]
 services:
-
-#Jenkins container
-  jenkins:
-    # image: jenkins
-    image: jenkins/jenkins:lts
-    ports:
-      - "${JENKINS_PORT}:8080"
-      - "50000:50000"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "${USERDIR}/docker/jenkins/jenkins_home:/var/jenkins_home"
-      - "${USERDIR}/docker/jenkins/var_jenkins:/var/lib/jenkins"
-    networks:
-      traefik_proxy:
-      custom:
-        ipv4_address: 192.168.4.4
-    domainname: ${DOMAINNAME}
-    hostname: jenkins
-    container_name: jenkins
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ}
-    labels:
-      traefik.enable: "true"
-      traefik.backend: jenkins
-      traefik.protocol: http
-      traefik.port: 8080
-      traefik.frontend.rule: Host:jenkins.${DOMAINNAME}
-#      traefik.frontend.rule: Host${DOMAINNAME}; PathPrefixStrip: /jenkins
-      traefik.frontend.headers.SSLHost: jenkins.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
-
-
-  artifactory:
-    image: docker.bintray.io/jfrog/artifactory-oss
-    ports:
-      - "${ARTIFACTORY_PORT}:8081"
-    networks:
-      traefik_proxy:
-      custom:
-        ipv4_address: 192.168.4.5
-    domainname: fabricesemti.com
-    hostname: artifactory
-    container_name: artifactory
-    restart: unless-stopped
-    labels:
-      traefik.enable: "true"
-      traefik.backend: artifactory
-      traefik.protocol: http
-      traefik.port: 8081
-      traefik.frontend.rule: Host:artifactory.${DOMAINNAME}
-#      traefik.frontend.rule: Host${DOMAINNAME}; PathPrefixStrip: /jenkins
-      traefik.frontend.headers.SSLHost: artifactory.${DOMAINNAME}
-      traefik.docker.network: traefik_proxy
-      traefik.frontend.passHostHeader: "true"
-      traefik.frontend.headers.SSLForceHost: "true"
-      traefik.frontend.headers.SSLRedirect: "true"
-      traefik.frontend.headers.browserXSSFilter: "true"
-      traefik.frontend.headers.contentTypeNosniff: "true"
-      traefik.frontend.headers.forceSTSHeader: "true"
-      traefik.frontend.headers.STSSeconds: 315360000
-      traefik.frontend.headers.STSIncludeSubdomains: "true"
-      traefik.frontend.headers.STSPreload: "true"
-      traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
-      traefik.frontend.headers.frameDeny: "true"
-      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-      traefik.frontend.auth.forward.address: "http://oauth:4181"
-      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-      traefik.frontend.auth.forward.trustForwardHeader: "true"
+# Jenkins - Jenkins
+    jenkins:
+        image: 'jenkins/jenkins:lts'
+        ports:
+            - '${JENKINS_PORT}:8080'
+            - '50000:50000'
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+            - '${USERDIR}/docker/jenkins/jenkins_home:/var/jenkins_home'
+            - '${USERDIR}/docker/jenkins/var_jenkins:/var/lib/jenkins'
+        networks:
+            traefik_proxy: null
+            custom: {ipv4_address: 192.168.4.4}
+        domainname: '${DOMAINNAME}'
+        hostname: jenkins
+        container_name: jenkins
+        restart: unless-stopped
+        environment:
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: jenkins
+            traefik.protocol: http
+            traefik.port: 8080
+            traefik.frontend.rule: 'Host:jenkins.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'jenkins.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+#Artifactory - Artifactory            
+    artifactory:
+        image: docker.bintray.io/jfrog/artifactory-oss
+        ports:
+            - '${ARTIFACTORY_PORT}:8081'
+        networks:
+            traefik_proxy: null
+            custom: {ipv4_address: 192.168.4.5}
+        domainname: fabricesemti.com
+        hostname: artifactory
+        container_name: artifactory
+        restart: unless-stopped
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: artifactory
+            traefik.protocol: http
+            traefik.port: 8081
+            traefik.frontend.rule: 'Host:artifactory.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'artifactory.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
