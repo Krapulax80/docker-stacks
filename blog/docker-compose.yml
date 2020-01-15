@@ -72,7 +72,7 @@ services:
         ports:
             - 2369
         volumes:
-            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content'
+            - '/home/fabrice/docker/blog2/content:/var/lib/ghost/content'
         labels:
             traefik.enable: 'true'
             traefik.backend: ghost2
