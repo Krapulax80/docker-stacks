@@ -29,10 +29,7 @@ services:
         image: 'ghost:1-alpine'
         restart: always
         ports:
-            - 2368
-        volumes:
-            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content'
-        labels:
+            - 2368       labels:
             traefik.enable: 'true'
             traefik.backend: ghost
             traefik.protocol: http
@@ -55,6 +52,9 @@ services:
         networks:
             - default
             - traefik_proxy
+        volumes:
+            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content'
+ 
         environment:
             url: 'http://ghost.${DOMAINNAME}'
             database__client: mysql
