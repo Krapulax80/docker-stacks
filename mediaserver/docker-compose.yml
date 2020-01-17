@@ -21,10 +21,10 @@ services:
         # # services:
 ## Ampache
 ## source: https://git.zom.bi/dockerfiles/ampache/blob/master/README.md
-#db
+#MySQL db
     mysql-ampache:
         image: mariadb:10
-        # hostname: mysql-ampache
+        container_name: mysql-ampache
         environment:
             - MYSQL_USER=ampache
             - MYSQL_PASSWORD=${MYSQL_PASSWORD}
@@ -37,6 +37,7 @@ services:
 #Ampache
     ampache:
         build: .
+        container_name: ampache
         links:
             - mysql-ampache:db
         volumes:
@@ -86,7 +87,6 @@ services:
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
 #----------------------- Ampache end----------------------#
-
  # HomeAssistant - home automation server
     homeassistant:
         container_name: homeassistant
