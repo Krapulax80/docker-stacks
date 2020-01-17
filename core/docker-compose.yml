@@ -1,0 +1,269 @@
+version: '3.7'
+networks:
+    traefik_proxy:
+        external:
+            name: traefik_proxy
+    default:
+        ipam:
+            driver: default
+            config: [{subnet: 192.168.0.0/24}]
+services:
+# Traefik - Reverse Proxy service
+# Create traefik.toml and rules dir and acme dir before running container.
+    traefik:
+        image: 'traefik:v1.7.16'
+        container_name: traefik
+        hostname: traefik
+        restart: unless-stopped
+        networks:
+            - default
+            - traefik_proxy
+        ports:
+            - '80:80'
+            - '443:443'
+            - '${TRAEFIK_DASHBOARD_PORT}:8080'
+        domainname: '${DOMAINNAME}'
+        dns:
+            - 1.1.1.1
+            - ${PIHOLE_IP}
+            - 192.168.1.1
+            - ${SERVER_IP}
+            - 208.67.222.222
+            - 208.67.220.220
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock:ro'
+            - '${USERDIR}/docker/traefik:/etc/traefik'
+            - '${USERDIR}/docker/shared:/shared'
+        environment:
+            CF_API_EMAIL: '${CLOUDFLARE_EMAIL}'
+            CF_API_KEY: '${CLOUDFLARE_API_KEY}'
+            DUCKDNS_TOKEN: '${DUCKDNS_TOKEN}'
+            GCE_PROJECT: 'Traefik Authentication'
+            GCE_SERVICE_ACCOUNT: 'Google DNS'
+            GCE_SERVICE_ACCOUNT_FILE: '/home/fabrice/docker/google-clouddns/Traefik Authentication-e4e3a01e2806.json'
+            GCE_POLLING_INTERVAL: 5
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: traefik
+            traefik.protocol: http
+            traefik.port: 8080
+            traefik.frontend.rule: 'Host:traefik.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'traefik.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# OAuth - Forward Authentication service           
+    oauth:
+        image: thomseddon/traefik-forward-auth
+        container_name: oauth
+        hostname: oauth
+        restart: always
+        networks:
+            - default
+            - traefik_proxy
+        environment:
+            PROVIDERS_GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID}'
+            PROVIDERS_GOOGLE_CLIENT_SECRET: '${GOOGLE_CLIENT_SECRET}'
+            SECRET: '${OAUTH_SECRET}'
+            COOKIE_DOMAIN: '${DOMAINNAME}'
+            INSECURE_COOKIE: 'false'
+            AUTH_HOST: 'oauth.${DOMAINNAME}'
+            URL_PATH: /_oauth
+            WHITELIST: '${MY_EMAIL}'
+            LOG_LEVEL: info
+            LIFETIME: 2592000
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: oauth
+            traefik.port: 4181
+            traefik.frontend.rule: 'Host:oauth.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'oauth.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# DD Client - dynamic DNS client            
+    ddclient:
+        image: linuxserver/ddclient
+        container_name: ddclient
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+        volumes:
+            - '${USERDIR}/docker/ddclient:/config'
+        restart: unless-stopped
+# Portainer - Docker container management
+# Needs trailing / in the URL if using PathPrefixStrip        
+    portainer:
+        image: portainer/portainer
+        container_name: portainer
+        hostname: portainer
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${PORTAINER_PORT}:9000'
+        command: '-H unix:///var/run/docker.sock'
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+            - '${USERDIR}/docker/portainer/data:/data'
+        environment:
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: portainer
+            traefik.protocol: http
+            traefik.port: 9000
+            traefik.frontend.rule: 'Host:portainer.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'portainer.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# Heimdall - unified front-end          
+    heimdall:
+        image: linuxserver/heimdall
+        container_name: heimdall
+        hostname: heimdall
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${HEIMDALL_PORT}:80'
+        volumes:
+            - '${USERDIR}/docker/heimdall:/config'
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: heimdall
+            traefik.protocol: http
+            traefik.port: 80
+            traefik.frontend.rule: 'Host:${DOMAINNAME},www.${DOMAINNAME}' #changed - FS
+            traefik.frontend.headers.SSLHost: '${DOMAINNAME}' #changed - FS
+            # traefik.frontend.rule: Host:heim.${DOMAINNAME} #changed - FS
+            # traefik.frontend.headers.SSLHost: heim.${DOMAINNAME} #changed - FS            
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+#Cloud commander - file managent from anywhere, any browser            
+    cloudcommander:
+        image: coderaiser/cloudcmd
+        container_name: cloudcommander
+        hostname: cloudcommander
+        networks:
+            - traefik_proxy
+            - default
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+            UMASK_SET: 18
+        volumes:
+            - '/:/mnt/fs'
+        ports:
+            - '${CLOUD_CMDR_PORT}:8000'
+        restart: unless-stopped
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: cloudcommander
+            traefik.protocol: http
+            traefik.port: 8000
+            traefik.frontend.rule: 'Host:cloudcommander.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'cloudcommander.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# Docker-GC - automatic Docker garbage collection 
+# Create docker-gc-exclude file - https://github.com/clockworksoul/docker-gc-cron            
+    dockergc:
+        image: 'clockworksoul/docker-gc-cron:latest'
+        container_name: docker-gc
+        hostname: docker-gc
+        restart: unless-stopped
+        network_mode: none
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+            - '${USERDIR}/docker/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude'
+        environment:
+            CRON: '0 0 * * *'
+            FORCE_IMAGE_REMOVAL: 1
+            FORCE_CONTAINER_REMOVAL: 0
+            GRACE_PERIOD_SECONDS: 604800
+            DRY_RUN: 0
+            CLEAN_UP_VOLUMES: 1
+            TZ: '${TZ}'
+#Watchtower - automatic Docker image updates           
+    watchtower:
+        # image: v2tec/watchtower
+        image: containrrr/watchtower
+        container_name: watchtower
+        restart: always
+        volumes:
+            - '/var/run/docker.sock:/var/run/docker.sock'
+        command: '--interval 3600'
