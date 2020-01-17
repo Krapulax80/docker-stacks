@@ -797,4 +797,94 @@ services:
             CRON_SCHEDULE: '*/5 * * * *'
             SECTION_MAPS: '${SYN_PLEX}/${SYN_PLEX_HOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_HOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TVSHOWS} ${NUC_PLEX}/${NUC_PLEX_TVSHOWS} | ${SYN_PLEX}/${SYN_PLEX_BOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_BOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_KOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_KOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_TOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_DOCMOVIES} ${NUC_PLEX}/${NUC_PLEX_DOCMOVIES} | ${SYN_PLEX}/${SYN_PLEX_DOCSHOWS} ${NUC_PLEX}/${NUC_PLEX_DOCSHOWS} | ${SYN_PLEX}/${SYN_PLEX_KIDSMOVIES} ${NUC_PLEX}/${NUC_PLEX_KIDSMOVIES} | ${SYN_PLEX}/${SYN_PLEX_INTERNATIONAL} ${NUC_PLEX}/${NUC_PLEX_INTERNATIONAL}'
         restart: unless-stopped
- 
+# # mstream - music streamer        
+    # mstream:
+        # image: linuxserver/mstream
+        # container_name: mstream
+        # hostname: mstream
+        # restart: unless-stopped
+        # networks:
+            # - traefik_proxy
+        # ports:
+            # - '${MSTREAM_PORT}:3000'
+        # volumes:
+            # - '${USERDIR}/docker/mstream/config:/config'
+            # # - '${USERDIR}/docker/mstream/playlists:/playlists'
+            # - '${HDD02}:/music'
+            # # - '${HDD02}/MUSIC-Albumok:/MUSIC-Albumok'
+            # # - '${HDD02}/MUSIC-Mixek:/MUSIC-Mixek'
+        # environment:
+            # PUID: '${PUID}'
+            # PGID: '${PGID}'
+            # TZ: '${TZ}'
+            # USER:  '${DEF_USER}'
+            # PASSWORD:  '${DEF_PASSWORD}'
+        # labels:
+            # traefik.enable: 'true'
+            # traefik.backend: mstream
+            # traefik.protocol: http
+            # traefik.port: 3000
+            # traefik.frontend.rule: 'Host:mstream.${DOMAINNAME}'
+            # traefik.frontend.headers.SSLHost: 'subsonic.${DOMAINNAME}'
+            # traefik.docker.network: traefik_proxy
+            # traefik.frontend.passHostHeader: 'true'
+            # traefik.frontend.headers.SSLForceHost: 'true'
+            # traefik.frontend.headers.SSLRedirect: 'true'
+            # traefik.frontend.headers.browserXSSFilter: 'true'
+            # traefik.frontend.headers.contentTypeNosniff: 'true'
+            # traefik.frontend.headers.forceSTSHeader: 'true'
+            # traefik.frontend.headers.STSSeconds: 315360000
+            # traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            # traefik.frontend.headers.STSPreload: 'true'
+            # traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            # traefik.frontend.headers.frameDeny: 'true'
+            # traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            # traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            # traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            # traefik.frontend.auth.forward.trustForwardHeader: 'true'        
+ # subsonic - music streamer        
+    subsonic:
+        image: danisla/subsonic:latest
+        container_name: subsonic
+        hostname: subsonic
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${SUBSONIC_PORT}:4040'
+        volumes:
+            - '${USERDIR}/docker/subsonic/state:/opt/app/state'
+            - '${USERDIR}/docker/subsonic/var:/var/subsonic'
+            # - '${USERDIR}/docker/subsonic/playlists:/playlists'
+            - '${HDD02}/MUSIC:/MUSIC'
+            - '${hdd02}/MUSIC-Albumok:/MUSIC-Albumok'
+            - '${hdd02}/MUSIC-Mixek:/MUSIC-Mixek'
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+            # USER:  '${DEF_USER}'
+            # PASSWORD:  '${DEF_PASSWORD}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: subsonic
+            traefik.protocol: http
+            traefik.port: 4040
+            traefik.frontend.rule: 'Host:subsonic.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'subsonic.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'        
