@@ -53,15 +53,14 @@ services:
             # - ldap
         ports:
             - '${AMPACHE_PORT}:80'
-        environment:
-            - PUID='${PUID}'
-            - PGID='${PGID}'
-            - TZ='${TZ}'        
-            - MYSQL_HOSTNAME='db'
-            # - MYSQL_PORT:
-            - MYSQL_USER=ampache
-            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-            - MYSQL_DATABASE=ampache
+        # environment:
+        #     - PUID='${PUID}'
+        #     - PGID='${PGID}'
+        #     - TZ='${TZ}'        
+        #     - MYSQL_HOSTNAME='db'
+        #     - MYSQL_USER=ampache
+        #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+        #     - MYSQL_DATABASE=ampache
         restart: unless-stopped
         labels:
             traefik.enable: 'true'
