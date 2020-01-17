@@ -1,0 +1,8 @@
+MySQL Hostname: db
+MySQL Administrative Username: ampache
+MySQL Administrative Password: ampache 								# replaced this with ${MYSQL_PASSWORD} variable in docker-compose
+Transcoding template configuration: avconv							# no such thing
+Players: uncheck Subsonic
+Open file insight, click all "Write" buttons from top to bottom
+Ignore error messages
+Configure LDAP														# i do not use that
