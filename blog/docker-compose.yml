@@ -9,7 +9,7 @@ networks:
             config: [{subnet: 192.168.3.0/24}]
 services:
 # MySQL Database - for blog backend
-    mysql:
+    mysql-blog:
         image: 'mysql:5.7'
         restart: always
         volumes:
@@ -23,7 +23,7 @@ services:
             MYSQL_USER: ghost
             MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
             MYSQL_DATABASE: ghostdb
-        container_name: mysql
+        container_name: mysql-blog
 # Ghost - blog engine        
     ghost:
         image: 'ghost:1-alpine'
@@ -54,56 +54,55 @@ services:
             - default
             - traefik_proxy
         volumes:
-            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content'
- 
+            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content' 
         environment:
             url: 'http://ghost.${DOMAINNAME}'
             database__client: mysql
-            database__connection__host: mysql
+            database__connection__host: mysql-blog
             database__connection__user: ghost
             database__connection__password: '${MYSQL_PASSWORD}'
             database__connection__database: ghostdb
         container_name: ghost
         depends_on:
-            - mysql
-# Ghost 2 - blog engine 2       
-    ghost2:
-        image: 'ghost:1-alpine'
-        restart: always
-        ports:
-            - 2369
-        volumes:
-            - '/home/fabrice/docker/blog2/content:/var/lib/ghost/content'
-        labels:
-            traefik.enable: 'true'
-            traefik.backend: ghost2
-            traefik.protocol: http
-            traefik.port: 2369
-            traefik.frontend.rule: 'Host:ghost2.${DOMAINNAME}'
-            traefik.frontend.headers.SSLHost: 'ghost2.${DOMAINNAME}'
-            traefik.docker.network: traefik_proxy
-            traefik.frontend.passHostHeader: 'true'
-            traefik.frontend.headers.SSLForceHost: 'true'
-            traefik.frontend.headers.SSLRedirect: 'true'
-            traefik.frontend.headers.browserXSSFilter: 'true'
-            traefik.frontend.headers.contentTypeNosniff: 'true'
-            traefik.frontend.headers.forceSTSHeader: 'true'
-            traefik.frontend.headers.STSSeconds: 315360000
-            traefik.frontend.headers.STSIncludeSubdomains: 'true'
-            traefik.frontend.headers.STSPreload: 'true'
-            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-            traefik.frontend.headers.frameDeny: 'true'
-            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-        networks:
-            - default
-            - traefik_proxy
-        environment:
-            url: 'http://ghost2.${DOMAINNAME}'
-            database__client: mysql
-            database__connection__host: mysql
-            database__connection__user: ghost
-            database__connection__password: '${MYSQL_PASSWORD}'
-            database__connection__database: ghostdb2
-        container_name: ghost2
-        depends_on:
-            - mysql            
+            - mysql-blog
+# # Ghost 2 - blog engine 2       
+#     ghost2:
+#         image: 'ghost:1-alpine'
+#         restart: always
+#         ports:
+#             - 2369
+#         volumes:
+#             - '/home/fabrice/docker/blog2/content:/var/lib/ghost/content'
+#         labels:
+#             traefik.enable: 'true'
+#             traefik.backend: ghost2
+#             traefik.protocol: http
+#             traefik.port: 2369
+#             traefik.frontend.rule: 'Host:ghost2.${DOMAINNAME}'
+#             traefik.frontend.headers.SSLHost: 'ghost2.${DOMAINNAME}'
+#             traefik.docker.network: traefik_proxy
+#             traefik.frontend.passHostHeader: 'true'
+#             traefik.frontend.headers.SSLForceHost: 'true'
+#             traefik.frontend.headers.SSLRedirect: 'true'
+#             traefik.frontend.headers.browserXSSFilter: 'true'
+#             traefik.frontend.headers.contentTypeNosniff: 'true'
+#             traefik.frontend.headers.forceSTSHeader: 'true'
+#             traefik.frontend.headers.STSSeconds: 315360000
+#             traefik.frontend.headers.STSIncludeSubdomains: 'true'
+#             traefik.frontend.headers.STSPreload: 'true'
+#             traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+#             traefik.frontend.headers.frameDeny: 'true'
+#             traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+#         networks:
+#             - default
+#             - traefik_proxy
+#         environment:
+#             url: 'http://ghost2.${DOMAINNAME}'
+#             database__client: mysql
+#             database__connection__host: mysql
+#             database__connection__user: ghost
+#             database__connection__password: '${MYSQL_PASSWORD}'
+#             database__connection__database: ghostdb2
+#         container_name: ghost2
+#         depends_on:
+#             - mysql            
