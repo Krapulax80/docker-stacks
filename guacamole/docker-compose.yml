@@ -9,12 +9,12 @@ networks:
             config: [{subnet: 192.168.2.0/24}]
 services:
  # MariaDB - database for Guacamole's remote access
-    mariadb:
+    mariadb-guacamole:
         image: mariadb
-        container_name: mariadb
-        hostname: mariadb
-        ports:
-            - '${DB_PORT}:3306'
+        container_name: mariadb-guacamole
+        # hostname: mariadb
+        # ports:
+        #     - '${DB_PORT}:3306'
         restart: unless-stopped
         networks:
             - traefik_proxy
@@ -43,12 +43,12 @@ services:
             - '${GUACAMOLE_PORT}:8080'
         links:
             - 'guacd:guacd'
-            - 'mariadb:mysql'
+            - 'mariadb-guacamole:mysql'
         depends_on:
-            - mariadb
+            - mariadb-guacamole
         environment:
             GUACD_HOSTNAME: guacd
-            MYSQL_HOSTNAME: mariadb
+            MYSQL_HOSTNAME: mariadb-guacamole
             MYSQL_PORT: '${DB_PORT}'
             MYSQL_DATABASE: guacamole
             MYSQL_USER: '${GUAC_MYSQL_USER}'
