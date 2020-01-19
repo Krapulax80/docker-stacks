@@ -64,6 +64,7 @@ services:
         #     - MYSQL_DATABASE=ampache
         restart: unless-stopped
         labels:
+            com.centurylinklabs.watchtower.enable: 'false'
             traefik.enable: 'true'
             traefik.backend: ampache
             traefik.protocol: http
