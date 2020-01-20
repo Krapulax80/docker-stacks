@@ -8,7 +8,6 @@ networks:
             driver: default
             config: [{subnet: 192.168.5.0/24}]
 services:
-
 #----------------------- Ampache start ----------------------#
         # # networks:
         # #     web:
@@ -167,15 +166,13 @@ services:
 # Glances - system information at a glance            
     glances:
         image: nicolargo/glances
-        hostname: glances
         container_name: glances
+        hostname: glances        
         restart: unless-stopped
-        privileged: true
         networks:
             - traefik_proxy
         ports:
             - '${GLANCES_PORT}:61208'
-        pid: host
         volumes:
             - '/var/run/docker.sock:/var/run/docker.sock:ro'
         environment:
@@ -203,6 +200,8 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        privileged: true     
+        pid: host               
 # InfluxDB - database for Grafana            
     influxdb:
         image: influxdb
@@ -224,9 +223,6 @@ services:
             - default
         ports:
             - '${GRAFANA_PORT}:3000'
-        depends_on:
-            - influxdb
-        user: '0'
         volumes:
             - '${USERDIR}/docker/grafana:/var/lib/grafana'
         environment:
@@ -253,11 +249,14 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        depends_on:
+            - influxdb
+        user: '0'            
  # Varken - Monitor Plex, Sonarr, Radarr, and Other Data            
     varken:
         image: boerderij/varken
-        hostname: varken
         container_name: varken
+        hostname: varken
         restart: unless-stopped
         networks:
             - traefik_proxy
@@ -516,17 +515,17 @@ services:
         image: linuxserver/ombi
         container_name: ombi
         hostname: ombi
+        restart: unless-stopped
         networks:
             - traefik_proxy
+        ports:
+            - '${OMBI_PORT}:3579'
         environment:
             - 'PUID=${PUID}'
             - 'PGID=${PGID}'
             - 'TZ=${TZ}'
         volumes:
             - '${USERDIR}/docker/ombi/config:/config'
-        ports:
-            - '${OMBI_PORT}:3579'
-        restart: unless-stopped
         labels:
             traefik.enable: 'true'
             traefik.backend: ombi
@@ -871,8 +870,9 @@ services:
     plex-sync:
         image: 'patsissons/plex-sync:develop'
         container_name: plex-sync
+        restart: unless-stopped        
         environment:
             INITIAL_RUN: 'true'
             CRON_SCHEDULE: '*/5 * * * *'
             SECTION_MAPS: '${SYN_PLEX}/${SYN_PLEX_HOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_HOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TVSHOWS} ${NUC_PLEX}/${NUC_PLEX_TVSHOWS} | ${SYN_PLEX}/${SYN_PLEX_BOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_BOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_KOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_KOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_TOLLYWOOD} ${NUC_PLEX}/${NUC_PLEX_TOLLYWOOD} | ${SYN_PLEX}/${SYN_PLEX_DOCMOVIES} ${NUC_PLEX}/${NUC_PLEX_DOCMOVIES} | ${SYN_PLEX}/${SYN_PLEX_DOCSHOWS} ${NUC_PLEX}/${NUC_PLEX_DOCSHOWS} | ${SYN_PLEX}/${SYN_PLEX_KIDSMOVIES} ${NUC_PLEX}/${NUC_PLEX_KIDSMOVIES} | ${SYN_PLEX}/${SYN_PLEX_INTERNATIONAL} ${NUC_PLEX}/${NUC_PLEX_INTERNATIONAL}'
-        restart: unless-stopped
+
