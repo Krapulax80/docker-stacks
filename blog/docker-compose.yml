@@ -11,25 +11,38 @@ services:
 # MySQL Database - for blog backend
     mysql-blog:
         image: 'mysql:5.7'
+        container_name: mysql-blog
         restart: always
-        volumes:
-            - '/home/fabrice/docker/blog/mysql:/var/lib/mysql'
-        labels:
-            - traefik.enable=false
         networks:
             - default
+        volumes:
+            - '/home/fabrice/docker/blog/mysql:/var/lib/mysql'
         environment:
             MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
             MYSQL_USER: ghost
             MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
             MYSQL_DATABASE: ghostdb
-        container_name: mysql-blog
+        labels:
+            - traefik.enable=false
 # Ghost - blog engine        
     ghost:
         image: 'ghost:1-alpine'
-        restart: always
+        container_name: ghost     
+        restart: unless-stopped
+        networks:
+            - default
+            - traefik_proxy
         ports:
-            - 2368       
+            - 2368  
+        volumes:
+            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content' 
+        environment:
+            url: 'http://ghost.${DOMAINNAME}'
+            database__client: mysql
+            database__connection__host: mysql-blog
+            database__connection__user: ghost
+            database__connection__password: '${MYSQL_PASSWORD}'
+            database__connection__database: ghostdb
         labels:
             traefik.enable: 'true'
             traefik.backend: ghost
@@ -50,59 +63,5 @@ services:
             traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
             traefik.frontend.headers.frameDeny: 'true'
             traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-        networks:
-            - default
-            - traefik_proxy
-        volumes:
-            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content' 
-        environment:
-            url: 'http://ghost.${DOMAINNAME}'
-            database__client: mysql
-            database__connection__host: mysql-blog
-            database__connection__user: ghost
-            database__connection__password: '${MYSQL_PASSWORD}'
-            database__connection__database: ghostdb
-        container_name: ghost
         depends_on:
             - mysql-blog
-# # Ghost 2 - blog engine 2       
-#     ghost2:
-#         image: 'ghost:1-alpine'
-#         restart: always
-#         ports:
-#             - 2369
-#         volumes:
-#             - '/home/fabrice/docker/blog2/content:/var/lib/ghost/content'
-#         labels:
-#             traefik.enable: 'true'
-#             traefik.backend: ghost2
-#             traefik.protocol: http
-#             traefik.port: 2369
-#             traefik.frontend.rule: 'Host:ghost2.${DOMAINNAME}'
-#             traefik.frontend.headers.SSLHost: 'ghost2.${DOMAINNAME}'
-#             traefik.docker.network: traefik_proxy
-#             traefik.frontend.passHostHeader: 'true'
-#             traefik.frontend.headers.SSLForceHost: 'true'
-#             traefik.frontend.headers.SSLRedirect: 'true'
-#             traefik.frontend.headers.browserXSSFilter: 'true'
-#             traefik.frontend.headers.contentTypeNosniff: 'true'
-#             traefik.frontend.headers.forceSTSHeader: 'true'
-#             traefik.frontend.headers.STSSeconds: 315360000
-#             traefik.frontend.headers.STSIncludeSubdomains: 'true'
-#             traefik.frontend.headers.STSPreload: 'true'
-#             traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-#             traefik.frontend.headers.frameDeny: 'true'
-#             traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-#         networks:
-#             - default
-#             - traefik_proxy
-#         environment:
-#             url: 'http://ghost2.${DOMAINNAME}'
-#             database__client: mysql
-#             database__connection__host: mysql
-#             database__connection__user: ghost
-#             database__connection__password: '${MYSQL_PASSWORD}'
-#             database__connection__database: ghostdb2
-#         container_name: ghost2
-#         depends_on:
-#             - mysql            
