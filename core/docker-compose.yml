@@ -14,7 +14,7 @@ services:
         image: 'traefik:v1.7.16'
         container_name: traefik
         hostname: traefik
-        restart: unless-stopped
+        restart: always
         networks:
             - default
             - traefik_proxy
@@ -22,14 +22,6 @@ services:
             - '80:80'
             - '443:443'
             - '${TRAEFIK_DASHBOARD_PORT}:8080'
-        domainname: '${DOMAINNAME}'
-        dns:
-            - 1.1.1.1
-            - ${PIHOLE_IP}
-            - 192.168.1.1
-            - ${SERVER_IP}
-            - 208.67.222.222
-            - 208.67.220.220
         volumes:
             - '/var/run/docker.sock:/var/run/docker.sock:ro'
             - '${USERDIR}/docker/traefik:/etc/traefik'
@@ -65,6 +57,14 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        domainname: '${DOMAINNAME}'
+        dns:
+            - 1.1.1.1
+            - ${PIHOLE_IP}
+            - 192.168.1.1
+            - ${SERVER_IP}
+            - 208.67.222.222
+            - 208.67.220.220
 # OAuth - Forward Authentication service           
     oauth:
         image: thomseddon/traefik-forward-auth
@@ -110,13 +110,13 @@ services:
     ddclient:
         image: linuxserver/ddclient
         container_name: ddclient
+        restart: unless-stopped
+        volumes:
+            - '${USERDIR}/docker/ddclient:/config'
         environment:
             PUID: '${PUID}'
             PGID: '${PGID}'
             TZ: '${TZ}'
-        volumes:
-            - '${USERDIR}/docker/ddclient:/config'
-        restart: unless-stopped
 # Portainer - Docker container management
 # Needs trailing / in the URL if using PathPrefixStrip        
     portainer:
@@ -128,7 +128,6 @@ services:
             - traefik_proxy
         ports:
             - '${PORTAINER_PORT}:9000'
-        command: '-H unix:///var/run/docker.sock'
         volumes:
             - '/var/run/docker.sock:/var/run/docker.sock'
             - '${USERDIR}/docker/portainer/data:/data'
@@ -157,6 +156,7 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        command: '-H unix:///var/run/docker.sock'
 # Heimdall - unified front-end          
     heimdall:
         image: linuxserver/heimdall
@@ -203,19 +203,19 @@ services:
         image: coderaiser/cloudcmd
         container_name: cloudcommander
         hostname: cloudcommander
+        restart: unless-stopped
         networks:
             - traefik_proxy
             - default
+        ports:
+            - '${CLOUD_CMDR_PORT}:8000'
+        volumes:
+            - '/:/mnt/fs'
         environment:
             PUID: '${PUID}'
             PGID: '${PGID}'
             TZ: '${TZ}'
             UMASK_SET: 18
-        volumes:
-            - '/:/mnt/fs'
-        ports:
-            - '${CLOUD_CMDR_PORT}:8000'
-        restart: unless-stopped
         labels:
             traefik.enable: 'true'
             traefik.backend: cloudcommander
@@ -246,7 +246,6 @@ services:
         container_name: docker-gc
         hostname: docker-gc
         restart: unless-stopped
-        network_mode: none
         volumes:
             - '/var/run/docker.sock:/var/run/docker.sock'
             - '${USERDIR}/docker/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude'
@@ -258,6 +257,7 @@ services:
             DRY_RUN: 0
             CLEAN_UP_VOLUMES: 1
             TZ: '${TZ}'
+        network_mode: none
 #Watchtower - automatic Docker image updates           
     watchtower:
         # image: v2tec/watchtower

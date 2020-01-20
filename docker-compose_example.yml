@@ -1,0 +1,52 @@
+
+#------------------ My typical setup -------------------#
+
+#----------------------- Variables ---------------------#
+# <service/container name>
+# <service port>                                          # add this to the environment first
+# <service's virtual port>                                # this is what the service "thinks" it is uses
+# <service config directory>                              # normally within "${USERDIR}/docker/"
+# <additional volumes, depending on the service>          # add more places, if needed
+# <any additional parameters>    
+
+#----------------------- Template ----------------------#
+<service/container name>:
+        image: linuxserver/jackett                      #depends on the name of the image
+        container_name: <service/container name>
+        hostname: <service/container name>
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${<service port>}:<service's virtual port>'
+        volumes:
+            - '<service config directory>:/config'
+            - '<additional volumes, depending on the service>:/downloads'
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: <service/container name>
+            traefik.protocol: http
+            traefik.port: <service's virtual port>
+            traefik.frontend.rule: 'Host:<service/container name>.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: '<service/container name>.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# <any additional parameters>            
