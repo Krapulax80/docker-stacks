@@ -12,6 +12,12 @@ services:
 # Jenkins - Jenkins
     jenkins:
         image: 'jenkins/jenkins:lts'
+        container_name: jenkins
+        hostname: jenkins
+        restart: unless-stopped
+        networks:
+            traefik_proxy: null
+            custom: {ipv4_address: 192.168.4.4}
         ports:
             - '${JENKINS_PORT}:8080'
             - '50000:50000'
@@ -19,13 +25,6 @@ services:
             - '/var/run/docker.sock:/var/run/docker.sock'
             - '${USERDIR}/docker/jenkins/jenkins_home:/var/jenkins_home'
             - '${USERDIR}/docker/jenkins/var_jenkins:/var/lib/jenkins'
-        networks:
-            traefik_proxy: null
-            custom: {ipv4_address: 192.168.4.4}
-        domainname: '${DOMAINNAME}'
-        hostname: jenkins
-        container_name: jenkins
-        restart: unless-stopped
         environment:
             TZ: '${TZ}'
         labels:
@@ -51,18 +50,18 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        domainname: '${DOMAINNAME}'
 #Artifactory - Artifactory            
     artifactory:
         image: docker.bintray.io/jfrog/artifactory-oss
-        ports:
-            - '${ARTIFACTORY_PORT}:8081'
+        container_name: artifactory
+        hostname: artifactory
+        restart: unless-stopped
         networks:
             traefik_proxy: null
             custom: {ipv4_address: 192.168.4.5}
-        domainname: fabricesemti.com
-        hostname: artifactory
-        container_name: artifactory
-        restart: unless-stopped
+        ports:
+            - '${ARTIFACTORY_PORT}:8081'
         labels:
             traefik.enable: 'true'
             traefik.backend: artifactory
@@ -86,3 +85,4 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+        domainname: fabricesemti.com
