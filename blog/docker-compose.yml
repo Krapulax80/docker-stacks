@@ -16,7 +16,7 @@ services:
         networks:
             - default
         volumes:
-            - '/home/fabrice/docker/blog/mysql:/var/lib/mysql'
+            - '/home/fabrice/docker/ghost/blog/mysql:/var/lib/mysql'
         environment:
             MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
             MYSQL_USER: ghost
@@ -25,9 +25,9 @@ services:
         labels:
             - traefik.enable=false
 # Ghost - blog engine        
-    ghost:
+    ghost-blog:
         image: 'ghost:1-alpine'
-        container_name: ghost     
+        container_name: ghost-blog    
         restart: unless-stopped
         networks:
             - default
@@ -35,9 +35,9 @@ services:
         ports:
             - 2368  
         volumes:
-            - '/home/fabrice/docker/blog/content:/var/lib/ghost/content' 
+            - '/home/fabrice/docker/ghost/blog/content:/var/lib/ghost/content' 
         environment:
-            url: 'http://ghost.${DOMAINNAME}'
+            url: 'http://blog.${DOMAINNAME}'
             database__client: mysql
             database__connection__host: mysql-blog
             database__connection__user: ghost
@@ -45,11 +45,11 @@ services:
             database__connection__database: ghostdb
         labels:
             traefik.enable: 'true'
-            traefik.backend: ghost
+            traefik.backend: blog
             traefik.protocol: http
             traefik.port: 2368
-            traefik.frontend.rule: 'Host:ghost.${DOMAINNAME}'
-            traefik.frontend.headers.SSLHost: 'ghost.${DOMAINNAME}'
+            traefik.frontend.rule: 'Host:blog.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'blog.${DOMAINNAME}'
             traefik.docker.network: traefik_proxy
             traefik.frontend.passHostHeader: 'true'
             traefik.frontend.headers.SSLForceHost: 'true'
