@@ -21,9 +21,9 @@ services:
 ## Ampache
 ## source: https://git.zom.bi/dockerfiles/ampache/blob/master/README.md
 #MySQL db
-    mysql-ampache:
+    mariadb-ampache:
         image: mariadb:10
-        container_name: mysql-ampache
+        container_name: mariadb-ampache
         environment:
             - MYSQL_USER=ampache
             - MYSQL_PASSWORD=${MYSQL_PASSWORD}
@@ -38,7 +38,7 @@ services:
         build: .
         container_name: ampache
         links:
-            - mysql-ampache:db
+            - mariadb-ampache:db
         volumes:
             -  '${USERDIR}/docker/ampache/config:/var/www/html/config'
             -  '${HDD02}:/media:ro'
