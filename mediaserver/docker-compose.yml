@@ -9,84 +9,75 @@ networks:
             config: [{subnet: 192.168.5.0/24}]
 services:
 #----------------------- Ampache start ----------------------#
-        # # networks:
-        # #     web:
-        # #         external:
-        # #             name: traefik_proxy
-        # #     ldap:
-        # #         external:
-        # #             name: slapd_net
-        # #     internal:
-        # # services:
-## Ampache
-## source: https://git.zom.bi/dockerfiles/ampache/blob/master/README.md
-#MySQL db
-    mariadb-ampache:
-        image: mariadb:10
-        container_name: mariadb-ampache
-        environment:
-            - MYSQL_USER=ampache
-            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-            - MYSQL_DATABASE=ampache
-        volumes:
-            - '${USERDIR}/docker/ampache/mysql:/var/lib/mysql'
-        networks:
-            - default
-#Ampache
-    ampache:
-        build: .
-        container_name: ampache
-        links:
-            - mariadb-ampache:db
-        volumes:
-            -  '${USERDIR}/docker/ampache/config:/var/www/html/config'
-            -  '${HDD02}:/media:ro'
-                # # labels:
-                # #     - "traefik.enable=true"
-                # #     - "traefik.backend=ampache"
-                # #     - "traefik.frontend.rule=Host: music.zom.bi"
-                # #     - "traefik.docker.network=traefik_proxy"
-        networks:
-            - traefik_proxy
-            - default
-            # - ldap
-        ports:
-            - '${AMPACHE_PORT}:80'
-        # environment:
-        #     - PUID='${PUID}'
-        #     - PGID='${PGID}'
-        #     - TZ='${TZ}'        
-        #     - MYSQL_HOSTNAME='db'
-        #     - MYSQL_USER=ampache
-        #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-        #     - MYSQL_DATABASE=ampache
-        restart: unless-stopped
-        labels:
-            com.centurylinklabs.watchtower.enable: 'false'
-            traefik.enable: 'true'
-            traefik.backend: ampache
-            traefik.protocol: http
-            traefik.port: 80
-            traefik.frontend.rule: 'Host:ampache.${DOMAINNAME}'
-            traefik.frontend.headers.SSLHost: 'ampache.${DOMAINNAME}'
-            traefik.docker.network: traefik_proxy
-            traefik.frontend.passHostHeader: 'true'
-            traefik.frontend.headers.SSLForceHost: 'true'
-            traefik.frontend.headers.SSLRedirect: 'true'
-            traefik.frontend.headers.browserXSSFilter: 'true'
-            traefik.frontend.headers.contentTypeNosniff: 'true'
-            traefik.frontend.headers.forceSTSHeader: 'true'
-            traefik.frontend.headers.STSSeconds: 315360000
-            traefik.frontend.headers.STSIncludeSubdomains: 'true'
-            traefik.frontend.headers.STSPreload: 'true'
-            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-            traefik.frontend.headers.frameDeny: 'true'
-            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
-            traefik.frontend.auth.forward.address: 'http://oauth:4181'
-            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
-            traefik.frontend.auth.forward.trustForwardHeader: 'true'
-#----------------------- Ampache end----------------------#
+# ## Ampache
+# ## source: https://git.zom.bi/dockerfiles/ampache/blob/master/README.md
+# #MySQL db
+#     mariadb-ampache:
+#         image: mariadb:10
+#         container_name: mariadb-ampache
+#         environment:
+#             - MYSQL_USER=ampache
+#             - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+#             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+#             - MYSQL_DATABASE=ampache
+#         volumes:
+#             - '${USERDIR}/docker/ampache/mysql:/var/lib/mysql'
+#         networks:
+#             - default
+# #Ampache
+#     ampache:
+#         build: .
+#         container_name: ampache
+#         links:
+#             - mariadb-ampache:db
+#         volumes:
+#             -  '${USERDIR}/docker/ampache/config:/var/www/html/config'
+#             -  '${HDD02}:/media:ro'
+#                 # # labels:
+#                 # #     - "traefik.enable=true"
+#                 # #     - "traefik.backend=ampache"
+#                 # #     - "traefik.frontend.rule=Host: music.zom.bi"
+#                 # #     - "traefik.docker.network=traefik_proxy"
+#         networks:
+#             - traefik_proxy
+#             - default
+#             # - ldap
+#         ports:
+#             - '${AMPACHE_PORT}:80'
+#         # environment:
+#         #     - PUID='${PUID}'
+#         #     - PGID='${PGID}'
+#         #     - TZ='${TZ}'        
+#         #     - MYSQL_HOSTNAME='db'
+#         #     - MYSQL_USER=ampache
+#         #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+#         #     - MYSQL_DATABASE=ampache
+#         restart: unless-stopped
+#         labels:
+#             com.centurylinklabs.watchtower.enable: 'false'
+#             traefik.enable: 'true'
+#             traefik.backend: ampache
+#             traefik.protocol: http
+#             traefik.port: 80
+#             traefik.frontend.rule: 'Host:ampache.${DOMAINNAME}'
+#             traefik.frontend.headers.SSLHost: 'ampache.${DOMAINNAME}'
+#             traefik.docker.network: traefik_proxy
+#             traefik.frontend.passHostHeader: 'true'
+#             traefik.frontend.headers.SSLForceHost: 'true'
+#             traefik.frontend.headers.SSLRedirect: 'true'
+#             traefik.frontend.headers.browserXSSFilter: 'true'
+#             traefik.frontend.headers.contentTypeNosniff: 'true'
+#             traefik.frontend.headers.forceSTSHeader: 'true'
+#             traefik.frontend.headers.STSSeconds: 315360000
+#             traefik.frontend.headers.STSIncludeSubdomains: 'true'
+#             traefik.frontend.headers.STSPreload: 'true'
+#             traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+#             traefik.frontend.headers.frameDeny: 'true'
+#             traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+#             traefik.frontend.auth.forward.address: 'http://oauth:4181'
+#             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+#             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# #----------------------- Ampache end----------------------#
  # HomeAssistant - home automation server
     homeassistant:
         container_name: homeassistant
