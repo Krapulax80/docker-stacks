@@ -8,6 +8,7 @@ networks:
             driver: default
             config: [{subnet: 192.168.3.0/24}]
 services:
+#----------------------- Ghost - BLOG ----------------------#
 # MySQL Database - for blog backend
     mysql-blog:
         image: 'mysql:5.7'
@@ -26,7 +27,7 @@ services:
             - traefik.enable=false
 # Ghost - blog engine        
     ghost-blog:
-        image: 'ghost:1-alpine'
+        image: 'ghost:3-alpine'
         container_name: ghost-blog    
         restart: unless-stopped
         networks:
@@ -65,3 +66,61 @@ services:
             traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
         depends_on:
             - mysql-blog
+#----------------------- Ghost - REPAIRS ----------------------#
+# MySQL Database - for blog backend for repairs
+    mysql-repairs:
+        image: 'mysql:5.7'
+        container_name: mysql-repairs
+        restart: always
+        networks:
+            - default
+        volumes:
+            - '/home/fabrice/docker/ghost/repairs/mysql:/var/lib/mysql'
+        environment:
+            MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+            MYSQL_USER: ghost
+            MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+            MYSQL_DATABASE: ghostdb-repairs
+        labels:
+            - traefik.enable=false
+# Ghost - blog engine        
+    ghost-repairs:
+        image: 'ghost:3-alpine'
+        container_name: ghost-repairs   
+        restart: unless-stopped
+        networks:
+            - default
+            - traefik_proxy
+        ports:
+            - 2368  
+        volumes:
+            - '/home/fabrice/docker/ghost/repairs/content:/var/lib/ghost/content' 
+        environment:
+            url: 'http://repairs.${DOMAINNAME}'
+            database__client: mysql
+            database__connection__host: mysql-repairs
+            database__connection__user: ghost
+            database__connection__password: '${MYSQL_PASSWORD}'
+            database__connection__database: ghostdb-repairs
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: repairs
+            traefik.protocol: http
+            traefik.port: 2368
+            traefik.frontend.rule: 'Host:repairs.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'repairs.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+        depends_on:
+            - mysql-repairs
