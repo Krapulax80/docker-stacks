@@ -284,7 +284,7 @@ services:
             PGID: '${PGID}'
             TZ: '${TZ}'
             DOZZLE_TAILSIZE: 100
-            DOZZLE_FILTER: 'status:running'
+            #DOZZLE_FILTER: 'status:running'
         labels:
             traefik.enable: 'true'
             traefik.backend: dozzle
