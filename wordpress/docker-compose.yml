@@ -15,6 +15,9 @@ services:
     hostname: wordpress
     ports:
       - '${WORDPRESS_PORT}:80' # change ip if required
+    networks:
+      - default
+      - traefik_proxy      
     volumes:
       - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
       - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'  # Full wordpress project
@@ -61,6 +64,9 @@ services:
     volumes:
       - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
       - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'
+    networks:
+      - default
+      - traefik_proxy        
     depends_on:
       - mysql-wordpress
       - wordpress
@@ -99,6 +105,9 @@ services:
       traefik.frontend.auth.forward.trustForwardHeader: 'true'             
     ports:
       - '${PMA_PORT}:80'
+    networks:
+      - default
+      - traefik_proxy        
     links:
       - mysql-wordpress:mysql-wordpress
 #----------------------- MySQL - DATABASE ----------------------#
@@ -106,6 +115,8 @@ services:
     image: mysql:latest # https://hub.docker.com/_/mysql/ - or mariadb https://hub.docker.com/_/mariadb
     ports:
       - 3306:3306 # change ip if required
+    networks:
+      - default  
     command: [
         '--default_authentication_plugin=mysql_native_password',
         '--character-set-server=utf8mb4',
