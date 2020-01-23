@@ -9,10 +9,10 @@ networks:
             config: [{subnet: 192.168.7.0/24}]
 services:
 #----------------------- Wordpress - BLOG ENGINE ----------------------#
-  wordpress:
+  blog:
     image: wordpress:latest # https://hub.docker.com/_/wordpress/
-    container_name: wordpress
-    hostname: wordpress
+    container_name: blog
+    hostname: blog
     ports:
       - '${WORDPRESS_PORT}:80' # change ip if required
     networks:
@@ -20,7 +20,7 @@ services:
       - traefik_proxy      
     volumes:
       - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
-      - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'  # Full wordpress project
+      - '${USERDIR}/docker/wordpress/blog/var-www-html:/var/www/html'  # Full wordpress project
       #- ./plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name # Plugin development
       #- ./theme-name/trunk/:/var/www/html/wp-content/themes/theme-name # Theme development
     environment:
@@ -33,11 +33,11 @@ services:
       TZ: '${TZ}'
     labels:
       traefik.enable: 'true'
-      traefik.backend: wordpress
+      traefik.backend: blog
       traefik.protocol: http
       traefik.port: 80
-      traefik.frontend.rule: 'Host:wordpress.${DOMAINNAME}'
-      traefik.frontend.headers.SSLHost: 'wordpress.${DOMAINNAME}'
+      traefik.frontend.rule: 'Host:blog.${DOMAINNAME}'
+      traefik.frontend.headers.SSLHost: 'blog.${DOMAINNAME}'
       traefik.docker.network: traefik_proxy
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.headers.SSLForceHost: 'true'
@@ -63,13 +63,13 @@ services:
     image: wordpress:cli
     volumes:
       - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
-      - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'
+      - '${USERDIR}/docker/wordpress/blog/var-www-html:/var/www/html'
     networks:
       - default
       - traefik_proxy        
     depends_on:
       - mysql-wordpress
-      - wordpress
+      - wordpress-blog
 #----------------------- PHPMyadmin- MYSQL MGMT ----------------------#
   pma:
     image: phpmyadmin/phpmyadmin
