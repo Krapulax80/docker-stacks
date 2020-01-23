@@ -1,0 +1,123 @@
+version: '3'
+networks:
+    traefik_proxy:
+        external:
+            name: traefik_proxy
+    default:
+        ipam:
+            driver: default
+            config: [{subnet: 192.168.7.0/24}]
+services:
+#----------------------- Wordpress - BLOG ENGINE ----------------------#
+  wordpress:
+    image: wordpress:latest # https://hub.docker.com/_/wordpress/
+    container_name: wordpress
+    hostname: wordpress
+    ports:
+      - '${WORDPRESS_PORT}:80' # change ip if required
+    volumes:
+      - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+       - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'  # Full wordpress project
+      #- ./plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name # Plugin development
+      #- ./theme-name/trunk/:/var/www/html/wp-content/themes/theme-name # Theme development
+    environment:
+      WORDPRESS_DB_HOST: mysql-wordpress
+      WORDPRESS_DB_NAME: "wordpress-db-01"
+      WORDPRESS_DB_USER: wordpress-user
+      WORDPRESS_DB_PASSWORD: '${MYSQL_PASSWORD}'
+      PUID: '${PUID}'
+      PGID: '${PGID}'
+      TZ: '${TZ}'
+    labels:
+      traefik.enable: 'true'
+      traefik.backend: wordpress
+      traefik.protocol: http
+      traefik.port: 80
+      traefik.frontend.rule: 'Host:wordpress.${DOMAINNAME}'
+      traefik.frontend.headers.SSLHost: 'wordpress.${DOMAINNAME}'
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: 'true'
+      traefik.frontend.headers.SSLForceHost: 'true'
+      traefik.frontend.headers.SSLRedirect: 'true'
+      traefik.frontend.headers.browserXSSFilter: 'true'
+      traefik.frontend.headers.contentTypeNosniff: 'true'
+      traefik.frontend.headers.forceSTSHeader: 'true'
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: 'true'
+      traefik.frontend.headers.STSPreload: 'true'
+      traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+      traefik.frontend.headers.frameDeny: 'true'
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: 'http://oauth:4181'
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: 'true'      
+    depends_on:
+      - mysql-wordpress
+    links:
+      - mysql-wordpress
+#----------------------- Wordpress CLI - BLOG ENGINE CLI ----------------------#
+  wordpresscli:
+    image: wordpress:cli
+    volumes:
+      - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
+      - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'
+    depends_on:
+      - mysql-wordpress
+      - wordpress
+#----------------------- PHPMyadmin- MYSQL MGMT ----------------------#
+  pma:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql-wordpress
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      PUID: '${PUID}'
+      PGID: '${PGID}'
+      TZ: '${TZ}'
+    labels:
+      traefik.enable: 'true'
+      traefik.backend: pma
+      traefik.protocol: http
+      traefik.port: 80
+      traefik.frontend.rule: 'Host:pma.${DOMAINNAME}'
+      traefik.frontend.headers.SSLHost: 'pma.${DOMAINNAME}'
+      traefik.docker.network: traefik_proxy
+      traefik.frontend.passHostHeader: 'true'
+      traefik.frontend.headers.SSLForceHost: 'true'
+      traefik.frontend.headers.SSLRedirect: 'true'
+      traefik.frontend.headers.browserXSSFilter: 'true'
+      traefik.frontend.headers.contentTypeNosniff: 'true'
+      traefik.frontend.headers.forceSTSHeader: 'true'
+      traefik.frontend.headers.STSSeconds: 315360000
+      traefik.frontend.headers.STSIncludeSubdomains: 'true'
+      traefik.frontend.headers.STSPreload: 'true'
+      traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+      traefik.frontend.headers.frameDeny: 'true'
+      traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+      traefik.frontend.auth.forward.address: 'http://oauth:4181'
+      traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+      traefik.frontend.auth.forward.trustForwardHeader: 'true'             
+    ports:
+      - '${PMA_PORT}:80'
+    links:
+      - mysql-wordpress:mysql-wordpress
+#----------------------- MySQL - DATABASE ----------------------#
+  mysql-wordpress:
+    image: mysql:latest # https://hub.docker.com/_/mysql/ - or mariadb https://hub.docker.com/_/mariadb
+    ports:
+      - 3306:3306 # change ip if required
+    command: [
+        '--default_authentication_plugin=mysql_native_password',
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_unicode_ci'
+    ]
+    volumes:
+      - '${USERDIR}/docker/wordpress/wp-data:/docker-entrypoint-initdb.d'
+      - '${USERDIR}/docker/wordpress/db_data:/var/lib/mysql'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${MYSQL_PASSWORD}'
+      MYSQL_USER: wordpress-user
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+      MYSQL_DATABASE: "wordpress-db-01"   
+# volumes:
+#   db_data:
