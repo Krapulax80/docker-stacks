@@ -17,7 +17,7 @@ services:
       - '${WORDPRESS_PORT}:80' # change ip if required
     volumes:
       - ./config/php.conf.ini:/usr/local/etc/php/conf.d/conf.ini
-       - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'  # Full wordpress project
+      - '${USERDIR}/docker/wordpress/var-www-html:/var/www/html'  # Full wordpress project
       #- ./plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name # Plugin development
       #- ./theme-name/trunk/:/var/www/html/wp-content/themes/theme-name # Theme development
     environment:
