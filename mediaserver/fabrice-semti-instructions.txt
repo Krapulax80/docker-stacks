@@ -5,4 +5,4 @@ Transcoding template configuration: avconv							# no such thing
 Players: uncheck Subsonic
 Open file insight, click all "Write" buttons from top to bottom
 Ignore error messages
-Configure LDAP														# i do not use that
+Configure LDAP														# I do not use that
