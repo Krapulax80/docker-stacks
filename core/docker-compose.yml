@@ -178,10 +178,10 @@ services:
             traefik.backend: heimdall
             traefik.protocol: http
             traefik.port: 80
-            traefik.frontend.rule: 'Host:${DOMAINNAME},www.${DOMAINNAME}' #changed - FS
-            traefik.frontend.headers.SSLHost: '${DOMAINNAME}' #changed - FS
-            # traefik.frontend.rule: Host:heim.${DOMAINNAME} #changed - FS
-            # traefik.frontend.headers.SSLHost: heim.${DOMAINNAME} #changed - FS            
+            # traefik.frontend.rule: 'Host:${DOMAINNAME},www.${DOMAINNAME}' #changed - FS
+            # traefik.frontend.headers.SSLHost: '${DOMAINNAME}' #changed - FS
+            traefik.frontend.rule: Host:heim.${DOMAINNAME} #changed - FS
+            traefik.frontend.headers.SSLHost: heim.${DOMAINNAME} #changed - FS            
             traefik.docker.network: traefik_proxy
             traefik.frontend.passHostHeader: 'true'
             traefik.frontend.headers.SSLForceHost: 'true'
