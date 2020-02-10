@@ -308,3 +308,44 @@ services:
             traefik.frontend.auth.forward.address: 'http://oauth:4181'
             traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             traefik.frontend.auth.forward.trustForwardHeader: 'true'
+#Duplicati - Docker (and possibly other) data backup
+    duplicati :
+        image: linuxserver/duplicati                      #depends on the name of the image
+        container_name: duplicati
+        hostname: duplicati
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${DUPLICATI_PORT}:8200'
+        volumes:
+         - '/home/fabrice/docker/duplicati/config:/config'
+        #  - '/home/fabrice:/backups'
+         - '/home/fabrice:/source'
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: duplicati
+            traefik.protocol: http
+            traefik.port: 8200
+            traefik.frontend.rule: 'Host:duplicati.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'duplicati.${DOMAINNAME}'
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: 'true'            

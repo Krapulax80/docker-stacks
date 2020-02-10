@@ -2,37 +2,39 @@
 #------------------ My typical setup -------------------#
 
 #----------------------- Variables ---------------------#
-# <service/container name>
-# <service port>                                          # add this to the environment first
+# duplicati
+# DUPLICATI_PORT                                          # add this to the environment first
 # <service's virtual port>                                # this is what the service "thinks" it is uses
 # <service config directory>                              # normally within "${USERDIR}/docker/"
 # <additional volumes, depending on the service>          # add more places, if needed
 # <any additional parameters>    
 
 #----------------------- Template ----------------------#
-<service/container name>:
-        image: linuxserver/jackett                      #depends on the name of the image
-        container_name: <service/container name>
-        hostname: <service/container name>
+#duplicati - data backup
+    duplicati :
+        image: linuxserver/duplicati                      #depends on the name of the image
+        container_name: duplicati
+        hostname: duplicati
         restart: unless-stopped
         networks:
             - traefik_proxy
         ports:
-            - '${<service port>}:<service's virtual port>'
+            - '${DUPLICATI_PORT}:8200'
         volumes:
-            - '<service config directory>:/config'
-            - '<additional volumes, depending on the service>:/downloads'
+         - '/home/fabrice/docker/duplicati/config:/config'
+        #  - '/home/fabrice:/backups'
+         - '/home/fabrice:/source'
         environment:
             PUID: '${PUID}'
             PGID: '${PGID}'
             TZ: '${TZ}'
         labels:
             traefik.enable: 'true'
-            traefik.backend: <service/container name>
+            traefik.backend: duplicati
             traefik.protocol: http
-            traefik.port: <service's virtual port>
-            traefik.frontend.rule: 'Host:<service/container name>.${DOMAINNAME}'
-            traefik.frontend.headers.SSLHost: '<service/container name>.${DOMAINNAME}'
+            traefik.port: 8200
+            traefik.frontend.rule: 'Host:duplicati.${DOMAINNAME}'
+            traefik.frontend.headers.SSLHost: 'duplicati.${DOMAINNAME}'
             traefik.docker.network: traefik_proxy
             traefik.frontend.passHostHeader: 'true'
             traefik.frontend.headers.SSLForceHost: 'true'
