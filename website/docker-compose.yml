@@ -19,24 +19,25 @@ services:
 # <any additional parameters>    
 
 #----------------------- Template ----------------------#
-    nginx :
+
+    fabricesemti.com :
         image: linuxserver/nginx                    #depends on the name of the image
-        container_name: nginx 
-        hostname: nginx 
+        container_name: fabricesemti.com
+        hostname: fabricesemti.com nginx 
         restart: unless-stopped
         networks:
             - traefik_proxy
         ports:
-            - '${NGINX_PORT}:80'
+            - '${NGINX_PORT0}:80'
         volumes:
-            - '${NGINX_HOME}/config:/config'
+            - '${NGINX_HOME}/fabricesemti.com/config:/config'
         environment:
             PUID: '${PUID}'
             PGID: '${PGID}'
             TZ: '${TZ}'
         labels:
             traefik.enable: 'true'
-            traefik.backend: nginx 
+            traefik.backend: fabricesemti.com
             traefik.protocol: http
             traefik.port: 80
             traefik.frontend.rule: 'Host:${DOMAINNAME},www.${DOMAINNAME}' #changed - FS
@@ -57,4 +58,45 @@ services:
             # traefik.frontend.auth.forward.address: 'http://oauth:4181'
             # traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
             # traefik.frontend.auth.forward.trustForwardHeader: 'true'
-# <any additional parameters>            
+# <any additional parameters>     
+
+
+    demo1.fabricesemti.com :
+        image: linuxserver/nginx                    #depends on the name of the image
+        container_name: demo1.fabricesemti.com
+        hostname: demo1.fabricesemti.com
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+        ports:
+            - '${NGINX_PORT1}:80'
+        volumes:
+            - '${NGINX_HOME}/demo1.fabricesemti.com/config:/config'
+        environment:
+            PUID: '${PUID}'
+            PGID: '${PGID}'
+            TZ: '${TZ}'
+        labels:
+            traefik.enable: 'true'
+            traefik.backend: demo1.fabricesemti.com
+            traefik.protocol: http
+            traefik.port: 80
+            traefik.frontend.rule: 'Host:demo1.${DOMAINNAME},www.demo1.${DOMAINNAME}' #changed - FS
+            traefik.frontend.headers.SSLHost: 'demo1.${DOMAINNAME}' #changed - FS
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: 'true'
+            traefik.frontend.headers.SSLForceHost: 'true'
+            traefik.frontend.headers.SSLRedirect: 'true'
+            traefik.frontend.headers.browserXSSFilter: 'true'
+            traefik.frontend.headers.contentTypeNosniff: 'true'
+            traefik.frontend.headers.forceSTSHeader: 'true'
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: 'true'
+            traefik.frontend.headers.STSPreload: 'true'
+            traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+            traefik.frontend.headers.frameDeny: 'true'
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            # traefik.frontend.auth.forward.address: 'http://oauth:4181'
+            # traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            # traefik.frontend.auth.forward.trustForwardHeader: 'true'
+# <any additional parameters>     
