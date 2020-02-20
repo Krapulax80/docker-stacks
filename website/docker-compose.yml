@@ -62,16 +62,16 @@ services:
 
 
     demo1.fabricesemti.com :
-        image: linuxserver/nginx                    #depends on the name of the image
-        container_name: demo1.fabricesemti.com
-        hostname: demo1.fabricesemti.com
+        image: linuxserver/nginx                    
+        container_name: demo1.fabricesemti.com # update me for new website
+        hostname: demo1.fabricesemti.com # update me for new website
         restart: unless-stopped
         networks:
             - traefik_proxy
         ports:
-            - '${NGINX_PORT1}:80'
+            - '${NGINX_PORT1}:80' # update me for new website
         volumes:
-            - '${NGINX_HOME}/demo1.fabricesemti.com/config:/config'
+            - '${NGINX_HOME}/demo1.fabricesemti.com/config:/config' # update me for new website
         environment:
             PUID: '${PUID}'
             PGID: '${PGID}'
@@ -81,8 +81,8 @@ services:
             traefik.backend: demo1.fabricesemti.com
             traefik.protocol: http
             traefik.port: 80
-            traefik.frontend.rule: 'Host:demo1.${DOMAINNAME},www.demo1.${DOMAINNAME}' #changed - FS
-            traefik.frontend.headers.SSLHost: 'demo1.${DOMAINNAME}' #changed - FS
+            traefik.frontend.rule: 'Host:demo1.${DOMAINNAME},www.demo1.${DOMAINNAME}' # update me for new website
+            traefik.frontend.headers.SSLHost: 'demo1.${DOMAINNAME}' # update me for new website
             traefik.docker.network: traefik_proxy
             traefik.frontend.passHostHeader: 'true'
             traefik.frontend.headers.SSLForceHost: 'true'
