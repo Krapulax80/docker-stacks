@@ -100,7 +100,7 @@ services:
             # traefik.frontend.auth.forward.trustForwardHeader: 'true'
 # <any additional parameters>     
 
-    demo2fabricesemti.com :  # update me for new website
+    demo2.fabricesemti.com :  # update me for new website
         image: linuxserver/nginx                    
         container_name: demo2.fabricesemti.com # update me for new website
         hostname: demo2.fabricesemti.com # update me for new website
@@ -117,7 +117,7 @@ services:
             TZ: '${TZ}'
         labels:
             traefik.enable: 'true'
-            traefik.backend: demo1.fabricesemti.com
+            traefik.backend: demo2.fabricesemti.com # update me for new website
             traefik.protocol: http
             traefik.port: 80
             traefik.frontend.rule: 'Host:demo2.${DOMAINNAME},www.demo2.${DOMAINNAME}' # update me for new website
