@@ -1,3 +1,4 @@
 ghost-stack/blog/*
 ghost-stack/data/*
 .env
+.vscode/settings.json
