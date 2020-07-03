@@ -922,4 +922,52 @@ services:
         volumes:
             - '${USERDIR}/docker/lychee/mysql:/var/lib/mysql'
         networks:
-            - default            
+            - default
+            
+# Jellyfin - Media Server
+    jellyfin:
+        image: jellyfin/jellyfin:latest
+        container_name: jellyfin
+        hostname: jellyfin
+        restart: unless-stopped
+        networks:
+            - traefik_proxy
+            - default
+    #    network_mode: container:vpn-rutorrent
+        ports:
+            - "${JELLYFIN_PORT}:8096"
+            - "8920:8920"
+        environment:
+            PUID: ${PUID}
+            PGID: ${PGID}
+            TZ: ${TZ}
+            UMASK_SET: 022
+        volumes:
+            - ${USERDIR}/docker/jellyfin:/config
+            - /dev/shm:/ram_transcode
+          # - /media:/nas
+            - ${HDD01}:/hdd01
+            - ${HDD02}:/hdd02
+        labels:
+            traefik.enable: "true"
+            traefik.backend: jellyfin
+            traefik.protocol: http
+            traefik.port: 8096
+            traefik.frontend.rule: Host:jelly.${DOMAINNAME}
+            traefik.frontend.headers.SSLHost: jelly.${DOMAINNAME}
+            traefik.docker.network: traefik_proxy
+            traefik.frontend.passHostHeader: "true"
+            traefik.frontend.headers.SSLForceHost: "true"
+            traefik.frontend.headers.SSLRedirect: "true"
+            traefik.frontend.headers.browserXSSFilter: "true"
+            traefik.frontend.headers.contentTypeNosniff: "true"
+            traefik.frontend.headers.forceSTSHeader: "true"
+            traefik.frontend.headers.STSSeconds: 315360000
+            traefik.frontend.headers.STSIncludeSubdomains: "true"
+            traefik.frontend.headers.STSPreload: "true"
+            traefik.frontend.headers.customResponseHeaders: X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex
+            traefik.frontend.headers.frameDeny: "true"
+            traefik.frontend.headers.customFrameOptionsValue: 'allow-from https:${DOMAINNAME}'
+            traefik.frontend.auth.forward.address: "http://oauth:4181"
+            traefik.frontend.auth.forward.authResponseHeaders: X-Forwarded-User
+            traefik.frontend.auth.forward.trustForwardHeader: "true"            
