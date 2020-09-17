@@ -120,7 +120,7 @@ services:
 # Portainer - Docker container management
 # Needs trailing / in the URL if using PathPrefixStrip        
     portainer:
-        image: portainer/portainer
+        image: portainer/portainer-ce
         container_name: portainer
         hostname: portainer
         restart: unless-stopped
